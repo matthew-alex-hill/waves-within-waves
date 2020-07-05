@@ -49,7 +49,7 @@ static wave_output getSaw(wave_output base, wave_output frequency,
 			  wave_output amplitude, wave_output phase,
 			  clock time) {
   //TODO: this isn't quite right
-  return base + fmodf(time - (phase/frequency), 1/frequency) * (2 * amplitude * frequency);
+  return base - amplitude + fmodf(time - (phase/frequency), 1/frequency) * (2 * amplitude * frequency);
 }
 
 //creates a sine wave with the given parameters and samples it at the current time
@@ -64,7 +64,6 @@ static wave_output getSine(wave_output base, wave_output frequency,
 static wave_output getSquare(wave_output base, wave_output frequency,
 			     wave_output amplitude, wave_output phase,
 			     clock time) {
-
   if (!((int) (time * frequency) % 2)) {
     return base + amplitude;
   }
