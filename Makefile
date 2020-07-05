@@ -1,15 +1,20 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -g -D_DEFAULT_SOURCE -std=c99 -pedantic
-LIB = libwave_utils.a
-LIBOBJS = wave_generation.o
-BUILD = $(LIB)
+CC      = gcc
+CFLAGS  = -Wall -Wextra -Ilib -g -D_DEFAULT_SOURCE -std=c99 -pedantic
+LDLIBS  = -Lutils -lwave_utils
+BUILD   = libs synth
+
+.SUFFIXES: .c .o
+
+.PHONY: all clean
 
 all: $(BUILD)
 
-$(LIB): $(LIBOBJS)
-	ar rcs $(LIB) $(LIBOBJS)
+synth: synth.o
 
-wave_generation.o: wave_generation.h
+libs:
+	cd utils; make
 
 clean:
-	/bin/rm -f $(BUILD) *.o core
+	rm -f $(wildcard *.o)
+	rm -f synth
+	cd utils; make clean
