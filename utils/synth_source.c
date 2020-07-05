@@ -3,12 +3,12 @@
 
 Wave *getMainWave(void){
   Wave *mainWave = (Wave *) malloc(sizeof(Wave));
-  mainWave->shape = SAW;
+  mainWave->shape = SINE;
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
   mainWave->frequency.isValue = 1;
-  mainWave->frequency.content.value = 10000;
+  mainWave->frequency.content.value = 100;
 
   mainWave->amplitude.isValue = 1;
   mainWave->amplitude.content.value = 1;

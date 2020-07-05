@@ -56,7 +56,7 @@ static wave_output getSaw(wave_output base, wave_output frequency,
 static wave_output getSine(wave_output base, wave_output frequency,
 			   wave_output amplitude, wave_output phase,
 			   clock time) {
-  return base + amplitude * (wave_output) sin((double) (frequency * time / (2 * M_PI)
+  return base + amplitude * (wave_output) sinf((frequency * time / (2 * M_PI)
 							+ phase / (2 * M_PI)));
 }
 
