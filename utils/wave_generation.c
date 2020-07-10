@@ -48,15 +48,16 @@ wave_output sampleWave(Wave *wave, clock time) {
 static wave_output getSaw(wave_output base, wave_output frequency,
 			  wave_output amplitude, wave_output phase,
 			  clock time) {
-  //TODO: this isn't quite right
-  return base - amplitude + fmodf(time - (phase/frequency), 1/frequency) * (2 * amplitude * frequency);
+  wave_output distance = time * frequency + phase/frequency;
+  return base + 2 * amplitude * (distance - (int) distance);
 }
 
 //creates a sine wave with the given parameters and samples it at the current time
 static wave_output getSine(wave_output base, wave_output frequency,
 			   wave_output amplitude, wave_output phase,
 			   clock time) {
-  return base + amplitude * (wave_output) sinf(2 * M_PI * (frequency * time + phase));
+  return base + amplitude * (wave_output) sin((double)
+					      (2 * M_PI * (frequency * time + phase)));
 }
 
 //creates a square wave with the given parameters and samples it at the current time
@@ -71,14 +72,14 @@ static wave_output getSquare(wave_output base, wave_output frequency,
 static wave_output getTriangle(wave_output base, wave_output frequency,
 			       wave_output amplitude, wave_output phase,
 			       clock time) {
-  return 0;
+  return base + 2 * amplitude * asin((double) (sin((double) (2 * M_PI * (frequency * time + phase))))) / M_PI;
 }
 
 //treats a wave as a flat line (returns the base)
 static wave_output getEmpty(wave_output base, wave_output frequency,
 			    wave_output amplitude, wave_output phase,
 			    clock time) {
-  return base;
+  return 0;
 }
 
 wave_output sampleStandardWave(Wave *wave, clock time) {

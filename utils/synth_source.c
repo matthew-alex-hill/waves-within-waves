@@ -3,7 +3,7 @@
 
 Wave *getMainWave(void){
   Wave *mainWave = (Wave *) malloc(sizeof(Wave));
-  mainWave->shape = SQUARE;
+  mainWave->shape = TRIANGLE;
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
