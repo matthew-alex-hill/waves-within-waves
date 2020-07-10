@@ -5,4 +5,6 @@
 
 Wave *getMainWave(void);
 
+//TODO: implement a function for freeing all allocated data
+
 #endif

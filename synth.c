@@ -14,7 +14,6 @@ int main(void) {
   clock limit = 10;
   wave_output out;
 
-  printf("%f\n", pow(-1,1.5));
   while (time <= limit) {
     out = sampleWave(wave, time);
     fprintf(produced_data, "%f %f\n", out, time);
