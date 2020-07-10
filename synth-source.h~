@@ -1,6 +1,0 @@
-#ifndef SYNTH_SOURCE
-#define SYNTH_SOURCE
-
-#include "utils/wave_generation.h"
-
-#endif
