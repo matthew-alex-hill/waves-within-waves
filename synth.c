@@ -11,7 +11,7 @@ int main(void) {
   Wave *wave = getMainWave(); 
   clock time = 0;
   clock increments = 0.001;
-  clock limit = 10;
+  clock limit = 20;
   wave_output out;
 
   while (time <= limit) {

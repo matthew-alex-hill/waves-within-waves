@@ -1,6 +1,7 @@
 #include "wave_generation.h"
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 /* gets the value of a parameter of a wave at the current time
    waveValue - the wave_value struct of the parameter eg. frequency
@@ -49,7 +50,7 @@ static wave_output getSaw(wave_output base, wave_output frequency,
 			  wave_output amplitude, wave_output phase,
 			  clock time) {
   wave_output distance = time * frequency + phase/frequency;
-  return base + 2 * amplitude * (distance - (int) distance);
+  return base + 2 * amplitude * (distance - (int) distance) - amplitude;
 }
 
 //creates a sine wave with the given parameters and samples it at the current time
