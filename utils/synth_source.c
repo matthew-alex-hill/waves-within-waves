@@ -4,14 +4,29 @@
 Wave *getMainWave(void){
   Wave *mainWave = (Wave *) malloc(sizeof(Wave));
   Wave *amplitudeWave = (Wave *) malloc(sizeof(Wave));
+  Wave *frequencyWave = (Wave *) malloc(sizeof(Wave));
 
-  amplitudeWave->shape = SAW;
+  frequencyWave->shape = SINE;
+
+  frequencyWave->base.isValue = 1;
+  frequencyWave->base.content.value = 0.3;
+
+  frequencyWave->frequency.isValue = 1;
+  frequencyWave->frequency.content.value = 0.1;
+
+  frequencyWave->amplitude.isValue = 1;
+  frequencyWave->amplitude.content.value = 0.1;
+
+  frequencyWave->phase.isValue = 1;
+  frequencyWave->phase.content.value = 0;
+  
+  amplitudeWave->shape = SQUARE;
 
   amplitudeWave->base.isValue = 1;
   amplitudeWave->base.content.value = 5;
 
-  amplitudeWave->frequency.isValue = 1;
-  amplitudeWave->frequency.content.value = 0.5;
+  amplitudeWave->frequency.isValue = 0;
+  amplitudeWave->frequency.content.nested_wave = frequencyWave;
 
   amplitudeWave->amplitude.isValue = 1;
   amplitudeWave->amplitude.content.value = 2;
@@ -23,11 +38,11 @@ Wave *getMainWave(void){
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
-  mainWave->frequency.isValue = 0;
-  mainWave->frequency.content.nested_wave = amplitudeWave;
+  mainWave->frequency.isValue = 1;
+  mainWave->frequency.content.value = 2;
 
-  mainWave->amplitude.isValue = 1;
-  mainWave->amplitude.content.value = 1;
+  mainWave->amplitude.isValue = 0;
+  mainWave->amplitude.content.nested_wave = amplitudeWave;
 
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0.5;

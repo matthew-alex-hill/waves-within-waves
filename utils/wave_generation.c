@@ -59,6 +59,7 @@ static wave_output getSine(wave_output base, wave_output frequency,
 			   clock time) {
   return base + amplitude * (wave_output) sin((double)
 					      (2 * M_PI * (frequency * time + phase)));
+  //typecasts in sin used in case I want to change the type of wave_output
 }
 
 //creates a square wave with the given parameters and samples it at the current time

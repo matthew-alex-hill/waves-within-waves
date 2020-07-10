@@ -3,8 +3,8 @@
 #define WAVE_GENERATION
 
 //the type returned when taking a point from a wave
-//currently a float between -1 and 1 as this is best for portaudio callbacks
-typedef float wave_output;
+//currently a double for increased precision as calculations were getting inaccurate 
+typedef double wave_output;
 
 //the type of the time values
 typedef float clock;
