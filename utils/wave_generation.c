@@ -56,19 +56,15 @@ static wave_output getSaw(wave_output base, wave_output frequency,
 static wave_output getSine(wave_output base, wave_output frequency,
 			   wave_output amplitude, wave_output phase,
 			   clock time) {
-  return base + amplitude * (wave_output) sinf((frequency * time / (2 * M_PI)
-							+ phase / (2 * M_PI)));
+  return base + amplitude * (wave_output) sinf(2 * M_PI * (frequency * time + phase));
 }
 
 //creates a square wave with the given parameters and samples it at the current time
 static wave_output getSquare(wave_output base, wave_output frequency,
 			     wave_output amplitude, wave_output phase,
 			     clock time) {
-  if (!((int) (time * frequency) % 2)) {
-    return base + amplitude;
-  }
-
-  return base - amplitude;
+  return base + amplitude * pow(-1 , (int) ((2 * frequency * time)
+					    + phase/frequency)); 
 }
 
 //creates a triangular wave with the given parameters and samples it at the current time
