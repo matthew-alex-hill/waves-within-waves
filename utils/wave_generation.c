@@ -81,7 +81,12 @@ static wave_output getTriangle(wave_output base, wave_output frequency,
 static wave_output getEmpty(wave_output base, wave_output frequency,
 			    wave_output amplitude, wave_output phase,
 			    clock time) {
-  return 0;
+  //avoiding unused parameter warnings with casting
+  (void) frequency;
+  (void) amplitude;
+  (void) phase;
+  (void) time;
+  return base;
 }
 
 wave_output sampleStandardWave(Wave *wave, clock time) {
@@ -97,4 +102,21 @@ wave_output sampleStandardWave(Wave *wave, clock time) {
   return makers[wave->shape](wave->base.content.value, wave->frequency.content.value,
 			     wave->amplitude.content.value, wave->phase.content.value,
 			     time);
+}
+
+char *getProgramError(error_code e) {
+  error_type possible_errors[SYS-1];
+
+  possible_errors[OK].code = OK;
+  possible_errors[OK].message = "No Error";
+
+  possible_errors[ALLOCATION_FAIL].code = ALLOCATION_FAIL;
+  possible_errors[ALLOCATION_FAIL].message = "Out of Memory";
+
+  int i = 0;
+  while ((possible_errors[i].code != e) && i < (SYS - 1)) {
+    i++;
+  }
+
+  return possible_errors[i].message;  
 }

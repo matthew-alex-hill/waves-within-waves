@@ -2,6 +2,37 @@
 #ifndef WAVE_GENERATION
 #define WAVE_GENERATION
 
+#include <errno.h>
+//error code enum used for error handling of file reading
+typedef enum error_code {
+  OK,
+  ALLOCATION_FAIL,
+  SYS
+} error_code;
+
+//macros used to convert to and from system errors and program specific errors
+#define EC_FROM_SYS_ERROR(e) (SYS + e)
+#define EC_TO_SYS_ERROR(e) (e - SYS)
+#define EC_IS_SYS_ERROR(e) (e >= SYS)
+
+//macro used for handling fatal program errors with error code status if cond is true
+#define FATAL_PROG(cond, status) \
+  do { if (cond) { err = status; goto fatal; } } while (0)
+
+//macro used to handle system errors if cond is true
+#define FATAL_SYS(cond) \
+  do { if (cond) { err = EC_FROM_SYS_ERROR(errno); goto fatal; } } while (0)
+
+//structure used to associate error messages with program errors
+typedef struct err {
+  error_code code;
+  char *message;
+} error_type;
+
+/*returns an error message for a program error
+  err - the error code given by the program */
+char *getProgramError(error_code err);
+
 //the type returned when taking a point from a wave
 //currently a double for increased precision as calculations were getting inaccurate 
 typedef double wave_output;

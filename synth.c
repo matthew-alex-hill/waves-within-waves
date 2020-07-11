@@ -1,12 +1,13 @@
 #include "utils/wave_generation.h"
 #include "utils/synth_source.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+#include <string.h>
 int main(void) {
+  error_code err = OK;
   FILE *produced_data = fopen("out.txt", "w");
-  if (!produced_data) {
-    return 1;
-  }
+  FATAL_SYS(!produced_data);
   
   Wave *wave = getMainWave(); 
   clock time = 0;
@@ -20,6 +21,16 @@ int main(void) {
     time += increments;
   }
   
-  
-  return 0;
+  FATAL_SYS(!fclose(produced_data));
+
+ fatal:
+  if (err == OK) {
+    return EXIT_SUCCESS;
+  } else if (err == SYS) {
+    printf("%s\n", strerror(EC_TO_SYS_ERROR(err)));
+    return EXIT_FAILURE;
+  } else {
+    printf("%s\n", getProgramError(err));
+    return EXIT_FAILURE;
+  }
 }
