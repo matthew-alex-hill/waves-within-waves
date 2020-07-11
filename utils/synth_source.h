@@ -3,7 +3,7 @@
 
 #include "wave_generation.h"
 
-Wave *getMainWave(void);
+error_code getMainWave(Wave **out);
 
 //TODO: implement a function for freeing all allocated data
 

@@ -9,7 +9,10 @@ int main(void) {
   FILE *produced_data = fopen("out.txt", "w");
   FATAL_SYS(!produced_data);
   
-  Wave *wave = getMainWave(); 
+  Wave *wave = NULL;
+  err = getMainWave(&wave);
+  if (err != OK) goto fatal;
+  
   clock time = 0;
   clock increments = 0.001;
   clock limit = 20;

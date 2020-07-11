@@ -1,10 +1,18 @@
 #include "synth_source.h"
 #include <stdlib.h>
 
-Wave *getMainWave(void){
+error_code getMainWave(Wave **out){
   Wave *mainWave = (Wave *) malloc(sizeof(Wave));
   Wave *amplitudeWave = (Wave *) malloc(sizeof(Wave));
   Wave *frequencyWave = (Wave *) malloc(sizeof(Wave));
+
+  if (!mainWave || !amplitudeWave || !frequencyWave) {
+    free(mainWave);
+    free(amplitudeWave);
+    free(frequencyWave);
+    *out = NULL;
+    return ALLOCATION_FAIL;
+  }
 
   frequencyWave->shape = SINE;
 
@@ -47,5 +55,6 @@ Wave *getMainWave(void){
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0.5;
 
-  return mainWave;
+  *out = mainWave;
+  return OK;
 }
