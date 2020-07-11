@@ -31,13 +31,13 @@ error_code getMainWave(Wave **out){
   amplitudeWave->shape = SQUARE;
 
   amplitudeWave->base.isValue = 1;
-  amplitudeWave->base.content.value = 5;
+  amplitudeWave->base.content.value = 0.7;
 
   amplitudeWave->frequency.isValue = 0;
   amplitudeWave->frequency.content.nested_wave = frequencyWave;
 
   amplitudeWave->amplitude.isValue = 1;
-  amplitudeWave->amplitude.content.value = 2;
+  amplitudeWave->amplitude.content.value = 0.2;
 
   amplitudeWave->phase.isValue = 1;
   amplitudeWave->phase.content.value = 0;
@@ -47,10 +47,10 @@ error_code getMainWave(Wave **out){
   mainWave->base.content.value = 0;
 
   mainWave->frequency.isValue = 1;
-  mainWave->frequency.content.value = 2;
+  mainWave->frequency.content.value = 2000;
 
-  mainWave->amplitude.isValue = 0;
-  mainWave->amplitude.content.nested_wave = amplitudeWave;
+  mainWave->amplitude.isValue = 1;
+  mainWave->amplitude.content.value = 1;
 
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0.5;
