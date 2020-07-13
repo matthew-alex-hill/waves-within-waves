@@ -14,7 +14,7 @@ error_code getMainWave(Wave **out){
     return ALLOCATION_FAIL;
   }
 
-  frequencyWave->shape = SINE;
+  frequencyWave->shape = SAW;
 
   frequencyWave->base.isValue = 1;
   frequencyWave->base.content.value = 0.3;
@@ -42,7 +42,7 @@ error_code getMainWave(Wave **out){
   amplitudeWave->phase.isValue = 1;
   amplitudeWave->phase.content.value = 0;
   
-  mainWave->shape = SINE;
+  mainWave->shape = SAW;
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
@@ -53,7 +53,7 @@ error_code getMainWave(Wave **out){
   mainWave->amplitude.content.value = 1;
 
   mainWave->phase.isValue = 1;
-  mainWave->phase.content.value = 0.5;
+  mainWave->phase.content.value = 0;
 
   *out = mainWave;
   return OK;

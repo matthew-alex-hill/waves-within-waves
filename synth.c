@@ -22,10 +22,10 @@ static int paWavesWithinWavesCallback(const void *input,
   (void) input;
   float *out = (float *) output;
   Wave *wave = (Wave *) userData;
-  wave_output current_value;
+  float current_value;
   
   for (unsigned int i = 0; i < frameCount; i++) {
-    current_value = sampleWave(wave, timeInfo->currentTime);
+    current_value = (float) sampleWave(wave, timeInfo->currentTime);
     //TODO: check if this time calculation works
     *out++ = current_value; //left channel set
     *out++ = current_value; //right channel set
@@ -84,6 +84,10 @@ int main(void) {
   PA_CHECK(pa_err);
 
   printf("Stream started\n");
+
+  Pa_Sleep(1000);
+  printf("%lf\n", Pa_GetStreamTime(stream));
+  
   Pa_Sleep(PLAYTIME*1000); //plays stream for PLAYTIME seconds
 
   pa_err = Pa_StopStream(stream);

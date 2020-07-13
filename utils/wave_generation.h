@@ -93,6 +93,6 @@ wave_output sampleWave(Wave *wave, clock time);
    wave - the wave to be sampled
    ASSUMES ALL WAVE VALUES HAVE isValue TRUE
 */
-wave_output sampleStandardWave(Wave *wave, clock time);
+wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time);
 
 #endif

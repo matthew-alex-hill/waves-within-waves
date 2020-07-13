@@ -27,22 +27,7 @@ wave_output sampleWave(Wave *wave, clock time) {
   //TODO: add these once implementation is available
   //wave_output attack, decay, sustain, release;
 
-  //creates a new wave with the values at the current moment of time
-  Wave instanceWave;
-  instanceWave.shape = wave->shape;
-  instanceWave.base.isValue = 1;
-  instanceWave.base.content.value = base;
-  
-  instanceWave.frequency.isValue = 1;
-  instanceWave.frequency.content.value = frequency;
-
-  instanceWave.amplitude.isValue = 1;
-  instanceWave.amplitude.content.value = amplitude;
-
-  instanceWave.phase.isValue = 1;
-  instanceWave.phase.content.value = phase;
-
-  return sampleStandardWave(&instanceWave, time);
+  return sampleStandardWave(wave->shape, base, frequency, amplitude, phase, time);
 }
 
 //creates a sawtooth wave with the given parameters and samples it at the current time
@@ -89,19 +74,12 @@ static wave_output getEmpty(wave_output base, wave_output frequency,
   return base;
 }
 
-wave_output sampleStandardWave(Wave *wave, clock time) {
-  assert(wave->base.isValue);
-  assert(wave->frequency.isValue);
-  assert(wave->amplitude.isValue);
-  assert(wave->phase.isValue);
-
-  //array of function pointers to sample each wave type
+wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time) {
+    //array of function pointers to sample each wave type
   default_wave_maker makers[EMPTY+1] = {getSaw, getSine, getSquare, getTriangle, getEmpty};
 
   //wave shape used to index the array
-  return makers[wave->shape](wave->base.content.value, wave->frequency.content.value,
-			     wave->amplitude.content.value, wave->phase.content.value,
-			     time);
+  return makers[shape] (base, frequency, amplitude, phase, time);
 }
 
 char *getProgramError(error_code e) {
