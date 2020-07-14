@@ -11,6 +11,11 @@
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
 
+typedef struct timed_wave_data {
+  clock *time;
+  Wave *wave;
+} timed_wave;
+
 /*This is the callback function used by portaudio to output audio waveforms
   the parameters are layed out in the portaudio.h documentation */
 static int paWavesWithinWavesCallback(const void *input,
@@ -21,14 +26,16 @@ static int paWavesWithinWavesCallback(const void *input,
 				      void *userData) {
   (void) input;
   float *out = (float *) output;
-  Wave *wave = (Wave *) userData;
+  timed_wave *data = (timed_wave *) userData;
+  Wave *wave = data->wave;
   float current_value;
   
   for (unsigned int i = 0; i < frameCount; i++) {
-    current_value = (float) sampleWave(wave, timeInfo->currentTime);
-    //TODO: check if this time calculation works
+    current_value = (float) sampleWave(wave, *(data->time));
+    //TODO: this is an unsynchronised timer as ALSA does not give correct timings to portaudio
     *out++ = current_value; //left channel set
     *out++ = current_value; //right channel set
+    *(data->time) += 0.000001;
   }
   return 0;
 }
@@ -66,7 +73,11 @@ int main(void) {
   printf("File output completed\n");
 
   PaStream *stream;
+  
+  time = 0;
 
+  timed_wave tw = {&time, wave};
+  
   //opens a stereo output stream in stream with wave as an input
   pa_err = Pa_OpenDefaultStream(&stream,
 				0, //no input channels
@@ -76,7 +87,7 @@ int main(void) {
 				paFramesPerBufferUnspecified,
 				//variable frames per buffer based on the user's machine
 				paWavesWithinWavesCallback,
-				wave);
+				&tw);
   PA_CHECK(pa_err);
   printf("Stream opened\n");
   

@@ -14,16 +14,16 @@ error_code getMainWave(Wave **out){
     return ALLOCATION_FAIL;
   }
 
-  frequencyWave->shape = SAW;
+  frequencyWave->shape = SINE;
 
   frequencyWave->base.isValue = 1;
-  frequencyWave->base.content.value = 0.3;
+  frequencyWave->base.content.value = 100;
 
   frequencyWave->frequency.isValue = 1;
-  frequencyWave->frequency.content.value = 0.1;
+  frequencyWave->frequency.content.value = 500;
 
   frequencyWave->amplitude.isValue = 1;
-  frequencyWave->amplitude.content.value = 0.1;
+  frequencyWave->amplitude.content.value = 50;
 
   frequencyWave->phase.isValue = 1;
   frequencyWave->phase.content.value = 0;
@@ -42,15 +42,15 @@ error_code getMainWave(Wave **out){
   amplitudeWave->phase.isValue = 1;
   amplitudeWave->phase.content.value = 0;
   
-  mainWave->shape = SAW;
+  mainWave->shape = SINE;
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
   mainWave->frequency.isValue = 1;
-  mainWave->frequency.content.value = 2000;
+  mainWave->frequency.content.value = 10000;
 
-  mainWave->amplitude.isValue = 1;
-  mainWave->amplitude.content.value = 1;
+  mainWave->amplitude.isValue = 0;
+  mainWave->amplitude.content.nested_wave = amplitudeWave;
 
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0;
