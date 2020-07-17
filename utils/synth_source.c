@@ -1,7 +1,7 @@
 #include "synth_source.h"
 #include <stdlib.h>
 
-error_code getMainWave(Wave **out){
+error_code getMainWave(Wave **out, midi_note *note){
   Wave *mainWave = (Wave *) malloc(sizeof(Wave));
   Wave *amplitudeWave = (Wave *) malloc(sizeof(Wave));
   Wave *frequencyWave = (Wave *) malloc(sizeof(Wave));
@@ -46,8 +46,8 @@ error_code getMainWave(Wave **out){
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
-  mainWave->frequency.isValue = 1;
-  mainWave->frequency.content.value = 10000;
+  mainWave->frequency.isValue = 2;
+  mainWave->frequency.content.midi_value = &(note->frequency);
 
   mainWave->amplitude.isValue = 0;
   mainWave->amplitude.content.nested_wave = amplitudeWave;

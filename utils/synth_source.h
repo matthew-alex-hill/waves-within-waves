@@ -3,8 +3,6 @@
 
 #include "wave_generation.h"
 
-error_code getMainWave(Wave **out);
-
-//TODO: implement a function for freeing all allocated data
+error_code getMainWave(Wave **out, midi_note *note);
 
 #endif

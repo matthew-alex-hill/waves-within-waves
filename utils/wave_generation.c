@@ -2,16 +2,19 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* gets the value of a parameter of a wave at the current time
    waveValue - the wave_value struct of the parameter eg. frequency
    time - the current time */
 static wave_output getValue(wave_value *waveValue, clock time) {
-  if (waveValue->isValue) {
+  if (waveValue->isValue == 1) {
     return waveValue->content.value;
-  } else {
+  } else if (waveValue->isValue == 0) {
     Wave *nested = (Wave *) waveValue->content.nested_wave;
     return sampleWave(nested, time);
+  } else {
+    return *(waveValue->content.midi_value);
   }
 }
 

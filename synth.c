@@ -31,6 +31,7 @@ static int paWavesWithinWavesCallback(const void *input,
   float *out = (float *) output;
   timed_wave *data = (timed_wave *) userData;
   Wave *wave = data->wave;
+  
   float current_value;
   
   for (unsigned int i = 0; i < frameCount; i++) {
@@ -52,6 +53,10 @@ int main(int argc, char **argv) {
   int inFile = 0, outFile = 0;
   char *midiIn, *txtOut;
 
+  midi_note note = {0,2000}; //midi note initialised as a silent 2000hz wave
+
+  //TODO: the 2000Hz default value is only here for testing purposes whilst the midi files aren't properly processed
+  
   switch (argc) {
   case 1: //no arguments so no files opened
     break;
@@ -78,7 +83,7 @@ int main(int argc, char **argv) {
     FATAL_SYS(!input_data);
   }
   
-  err = getMainWave(&wave);
+  err = getMainWave(&wave, &note);
   if (err != OK) goto fatal;
 
   pa_err = Pa_Initialize();

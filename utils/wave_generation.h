@@ -2,6 +2,8 @@
 #ifndef WAVE_GENERATION
 #define WAVE_GENERATION
 
+
+/* ERROR HANDLING CODE */
 #include <errno.h>
 //error code enum used for error handling of file reading
 typedef enum error_code {
@@ -34,6 +36,8 @@ typedef struct err {
   err - the error code given by the program */
 char *getProgramError(error_code err);
 
+/* WAVE GENERATION FUNCTIONS */
+
 //the type returned when taking a point from a wave
 //currently a double for increased precision as calculations were getting inaccurate 
 typedef double wave_output;
@@ -53,6 +57,14 @@ typedef enum wave_shape_enum {
   EMPTY
 } wave_shape;
 
+/* the values stored in a MIDI note 
+   velocity - amplitude of note
+   frequency - frequency of note */
+typedef struct midi_note {
+  wave_output velocity;
+  wave_output frequency;
+} midi_note;
+
 /*the content of a wave value, which is one of
   a constant value
   a pointer to another wave structure
@@ -60,11 +72,12 @@ typedef enum wave_shape_enum {
 typedef union wave_content_union {
   wave_output value;
   void *nested_wave; //should always be a pointer to a wave
+  wave_output *midi_value; //points to a value in a midi_note struct
 } wave_content;
 
 //contains the wave content and a boolean stating what kind of content it has
 typedef struct wave_value_struct {
-  int isValue;
+  int isValue; // 0 = value, 1 = nested wave, 2 = midi value
   wave_content content;
 } wave_value;
 
