@@ -7,6 +7,7 @@
 typedef enum error_code {
   OK,
   ALLOCATION_FAIL,
+  ARGUMENT_ERROR,
   SYS
 } error_code;
 
@@ -95,4 +96,5 @@ wave_output sampleWave(Wave *wave, clock time);
 */
 wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time);
 
+void freeWave(Wave *wave);
 #endif

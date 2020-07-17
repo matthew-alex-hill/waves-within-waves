@@ -25,6 +25,9 @@ static int paWavesWithinWavesCallback(const void *input,
 				      PaStreamCallbackFlags statusFlags,
 				      void *userData) {
   (void) input;
+  (void) timeInfo;
+  (void) statusFlags;
+  //TODO: include timeInfo and status flags
   float *out = (float *) output;
   timed_wave *data = (timed_wave *) userData;
   Wave *wave = data->wave;
@@ -42,13 +45,39 @@ static int paWavesWithinWavesCallback(const void *input,
 
 
 /* main program loop that loads the wave and plays it */
-int main(void) {
+int main(int argc, char **argv) {
   error_code err = OK;
   PaError pa_err = paNoError;
-  FILE *produced_data = fopen("out.txt", "w");
-  FATAL_SYS(!produced_data);
-  
   Wave *wave = NULL;
+  int inFile = 0, outFile = 0;
+  char *midiIn, *txtOut;
+
+  switch (argc) {
+  case 1: //no arguments so no files opened
+    break;
+  case 3: //two arguments, midi file loaded and output file written to
+    outFile = 1;
+    txtOut = argv[2];
+  case 2: //one argument, midi file loaded
+    inFile = 1;
+    midiIn = argv[1];
+    break;
+  default:
+    FATAL_PROG(1, ARGUMENT_ERROR);
+  }
+
+  FILE * produced_data = NULL, *input_data = NULL;
+  
+  if (outFile) {
+    produced_data = fopen(txtOut, "w");
+    FATAL_SYS(!produced_data);
+  }
+
+  if (inFile) {
+    input_data = fopen(midiIn, "w");
+    FATAL_SYS(!input_data);
+  }
+  
   err = getMainWave(&wave);
   if (err != OK) goto fatal;
 
@@ -56,22 +85,24 @@ int main(void) {
   PA_CHECK(pa_err);
 
   printf("initialisation completed\n");
-  
+
   clock time = 0;
   clock increments = 0.00001;
   clock limit = 20;
   wave_output out;
 
-  while (time <= limit) {
-    out = sampleWave(wave, time);
-    fprintf(produced_data, "%f %f\n", out, time);
-    time += increments;
+  if (outFile) {
+    while (time <= limit) {
+      out = sampleWave(wave, time);
+      fprintf(produced_data, "%f %f\n", out, time);
+      time += increments;
+    }
+    
+    FATAL_SYS(fclose(produced_data));
+
+    printf("File output completed\n");
   }
-
-  FATAL_SYS(fclose(produced_data));
-
-  printf("File output completed\n");
-
+  
   PaStream *stream;
   
   time = 0;
@@ -95,9 +126,6 @@ int main(void) {
   PA_CHECK(pa_err);
 
   printf("Stream started\n");
-
-  Pa_Sleep(1000);
-  printf("%lf\n", Pa_GetStreamTime(stream));
   
   Pa_Sleep(PLAYTIME*1000); //plays stream for PLAYTIME seconds
 
@@ -111,7 +139,14 @@ int main(void) {
   pa_err = Pa_Terminate();
   PA_CHECK(pa_err);
   printf("portaudio terminated\n");
+
+  if (inFile) {
+    FATAL_SYS(fclose(input_data));
+  }
  fatal:
+
+  freeWave(wave);
+  
   if (err == OK) {
     return EXIT_SUCCESS;
   } else if (err >= SYS) {

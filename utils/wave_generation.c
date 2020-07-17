@@ -91,10 +91,37 @@ char *getProgramError(error_code e) {
   possible_errors[ALLOCATION_FAIL].code = ALLOCATION_FAIL;
   possible_errors[ALLOCATION_FAIL].message = "Out of Memory";
 
+  possible_errors[ARGUMENT_ERROR].code = ARGUMENT_ERROR;
+  possible_errors[ARGUMENT_ERROR].message = "Invalid Program arguments";
+
   int i = 0;
   while ((possible_errors[i].code != e) && i < (SYS - 1)) {
     i++;
   }
 
   return possible_errors[i].message;  
+}
+
+void freeWave(Wave* wave) {
+  if (wave == NULL) {
+    return;
+  }
+
+  if (!wave->base.isValue) {
+    freeWave(wave->base.content.nested_wave);
+  }
+
+  if (!wave->frequency.isValue) {
+    freeWave(wave->frequency.content.nested_wave);
+  }
+
+  if (!wave->amplitude.isValue) {
+    freeWave(wave->amplitude.content.nested_wave);
+  }
+
+  if (!wave->phase.isValue) {
+    freeWave(wave->phase.content.nested_wave);
+  }
+
+  free(wave);
 }
