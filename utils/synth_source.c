@@ -1,7 +1,7 @@
 #include "synth_source.h"
 #include <stdlib.h>
 
-error_code getMainWave(Wave **out, midi_note *note){
+error_code getMainWave(Wave **out){
   Wave *mainWave = (Wave *) malloc(sizeof(Wave));
   Wave *amplitudeWave = (Wave *) malloc(sizeof(Wave));
   Wave *frequencyWave = (Wave *) malloc(sizeof(Wave));
@@ -17,18 +17,18 @@ error_code getMainWave(Wave **out, midi_note *note){
   frequencyWave->shape = SINE;
 
   frequencyWave->base.isValue = 1;
-  frequencyWave->base.content.value = 100;
+  frequencyWave->base.content.value = 10;
 
   frequencyWave->frequency.isValue = 1;
-  frequencyWave->frequency.content.value = 500;
+  frequencyWave->frequency.content.value = 1;
 
   frequencyWave->amplitude.isValue = 1;
-  frequencyWave->amplitude.content.value = 50;
+  frequencyWave->amplitude.content.value = 5;
 
   frequencyWave->phase.isValue = 1;
   frequencyWave->phase.content.value = 0;
   
-  amplitudeWave->shape = SQUARE;
+  amplitudeWave->shape = SAW;
 
   amplitudeWave->base.isValue = 1;
   amplitudeWave->base.content.value = 0.7;
@@ -37,7 +37,7 @@ error_code getMainWave(Wave **out, midi_note *note){
   amplitudeWave->frequency.content.nested_wave = frequencyWave;
 
   amplitudeWave->amplitude.isValue = 1;
-  amplitudeWave->amplitude.content.value = 0.2;
+  amplitudeWave->amplitude.content.value = 0.3;
 
   amplitudeWave->phase.isValue = 1;
   amplitudeWave->phase.content.value = 0;
@@ -47,7 +47,7 @@ error_code getMainWave(Wave **out, midi_note *note){
   mainWave->base.content.value = 0;
 
   mainWave->frequency.isValue = 2;
-  mainWave->frequency.content.midi_value = &(note->frequency);
+  mainWave->frequency.content.value = FREQUENCY;
 
   mainWave->amplitude.isValue = 0;
   mainWave->amplitude.content.nested_wave = amplitudeWave;
@@ -55,6 +55,6 @@ error_code getMainWave(Wave **out, midi_note *note){
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0;
 
-  *out = mainWave;
+  *out = frequencyWave;
   return OK;
 }

@@ -57,10 +57,22 @@ typedef enum wave_shape_enum {
   EMPTY
 } wave_shape;
 
+typedef enum midi_note_state {
+  HELD,
+  RELEASED
+} note_status;
+
+typedef enum midi_note_value {
+  FREQUENCY,
+  VELOCITY
+} note_value;
+
 /* the values stored in a MIDI note 
    velocity - amplitude of note
    frequency - frequency of note */
 typedef struct midi_note {
+  note_status pressed;
+  clock pressed_time;
   wave_output velocity;
   wave_output frequency;
 } midi_note;
@@ -72,7 +84,7 @@ typedef struct midi_note {
 typedef union wave_content_union {
   wave_output value;
   void *nested_wave; //should always be a pointer to a wave
-  wave_output *midi_value; //points to a value in a midi_note struct
+  note_value midi_value; //points to a value in a midi_note struct
 } wave_content;
 
 //contains the wave content and a boolean stating what kind of content it has
@@ -101,7 +113,7 @@ typedef struct wave_struct {
    wave - pointer to the wave struct
    time - the time to sample at
 */
-wave_output sampleWave(Wave *wave, clock time);
+wave_output sampleWave(Wave *wave, clock time, midi_note *note);
 
 /* sample a generic wave shape given a wave with all constant parameters
    wave - the wave to be sampled

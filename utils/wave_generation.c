@@ -7,25 +7,28 @@
 /* gets the value of a parameter of a wave at the current time
    waveValue - the wave_value struct of the parameter eg. frequency
    time - the current time */
-static wave_output getValue(wave_value *waveValue, clock time) {
+static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) {
   if (waveValue->isValue == 1) {
     return waveValue->content.value;
   } else if (waveValue->isValue == 0) {
     Wave *nested = (Wave *) waveValue->content.nested_wave;
-    return sampleWave(nested, time);
+    return sampleWave(nested, time, note);
   } else {
-    return *(waveValue->content.midi_value);
+    if (waveValue->content.midi_value == FREQUENCY) {
+      return note->frequency;
+    }
+    return note->velocity;
   }
 }
 
-wave_output sampleWave(Wave *wave, clock time) {
+wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
   wave_output base, frequency, amplitude, phase;
 
   //sets wave values to their values at the current time
-  base = getValue(&wave->base, time);
-  frequency = getValue(&wave->frequency, time);
-  amplitude = getValue(&wave->amplitude, time);
-  phase = getValue(&wave->phase, time);
+  base = getValue(&wave->base, time, note);
+  frequency = getValue(&wave->frequency, time, note);
+  amplitude = getValue(&wave->amplitude, time, note);
+  phase = getValue(&wave->phase, time, note);
   
   //TODO: add these once implementation is available
   //wave_output attack, decay, sustain, release;

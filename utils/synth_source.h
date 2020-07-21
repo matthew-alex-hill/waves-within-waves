@@ -3,6 +3,6 @@
 
 #include "wave_generation.h"
 
-error_code getMainWave(Wave **out, midi_note *note);
+error_code getMainWave(Wave **out);
 
 #endif

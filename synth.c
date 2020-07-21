@@ -5,16 +5,27 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 
 #define SAMPLE_RATE (44100) //default value
 #define PLAYTIME (5)
+#define NUM_NOTES (8)
+
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
 
-typedef struct timed_wave_data {
+//TODO: move this messy code to somewhere else
+//TODO: comment up these definitions when the structre is finalised
+typedef struct midi_notes_data {
+  midi_note *notes[NUM_NOTES];
+  int length;
+} notes_data;
+
+typedef struct synth_data {
   clock *time;
+  notes_data *notes_info;
   Wave *wave;
-} timed_wave;
+} synth_data;
 
 /*This is the callback function used by portaudio to output audio waveforms
   the parameters are layed out in the portaudio.h documentation */
@@ -29,13 +40,19 @@ static int paWavesWithinWavesCallback(const void *input,
   (void) statusFlags;
   //TODO: include timeInfo and status flags
   float *out = (float *) output;
-  timed_wave *data = (timed_wave *) userData;
+  synth_data *data = (synth_data *) userData;
   Wave *wave = data->wave;
+  midi_note **notes = data->notes_info->notes;
   
   float current_value;
   
   for (unsigned int i = 0; i < frameCount; i++) {
-    current_value = (float) sampleWave(wave, *(data->time));
+    current_value = 0;
+    for(int i = 0; i < data->notes_info->length; i++) {
+      current_value += (float) sampleWave(wave, *(data->time), notes[i]);
+      notes[i]->pressed_time += 0.000001;
+    }
+    current_value = (float) (current_value / data->notes_info->length);
     //TODO: this is an unsynchronised timer as ALSA does not give correct timings to portaudio
     *out++ = current_value; //left channel set
     *out++ = current_value; //right channel set
@@ -44,6 +61,51 @@ static int paWavesWithinWavesCallback(const void *input,
   return 0;
 }
 
+void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
+  assert(index > 0 && index < NUM_NOTES);
+
+  //TODO: clean up memory of this logically removed node
+  notes[index] = NULL;
+
+  //resets notes to occupy first few spaces
+  for (int i = index; i < *length; i++){
+    notes[i] = notes[i+1];
+  }
+  //removes duplicate pointer
+  notes[*length] = NULL;
+  (*length)--;
+}
+
+void addNote(midi_note *notes[NUM_NOTES], int *length, midi_note *note) {
+  assert(*length <= NUM_NOTES);
+  if (*length == NUM_NOTES) {
+    //remove the longest running note / first released note
+    note_status max_status = HELD;
+    clock max_note_time = 0;
+    int max;
+    for (int i = 0; i < *length; i++) {
+      if (notes[i]->pressed == HELD) {
+	if (max_status == HELD && notes[i]->pressed_time > max_note_time) {
+	  max_note_time = notes[i]->pressed_time;
+	  max = i;
+	}
+      } else {
+	if (max_status == HELD) {
+	  max_status = RELEASED;
+	  max_note_time = notes[i]->pressed_time;
+	  max = i;
+	} else if (max_note_time < notes[i]->pressed_time) {
+	  max_note_time = notes[i]->pressed_time;
+	  max = i;
+	}
+      }
+    }
+    removeNote(notes, length, max);
+  }
+
+  notes[*length] = note;
+  (*length)++;
+}
 
 /* main program loop that loads the wave and plays it */
 int main(int argc, char **argv) {
@@ -53,9 +115,11 @@ int main(int argc, char **argv) {
   int inFile = 0, outFile = 0;
   char *midiIn, *txtOut;
 
-  midi_note note = {0,2000}; //midi note initialised as a silent 2000hz wave
+  notes_data notes_info = {0};
 
-  //TODO: the 2000Hz default value is only here for testing purposes whilst the midi files aren't properly processed
+  midi_note note1 = {HELD, 0, 1, 2620}; //pressed down middle c
+  
+  addNote(notes_info.notes, &notes_info.length, &note1);
   
   switch (argc) {
   case 1: //no arguments so no files opened
@@ -83,7 +147,8 @@ int main(int argc, char **argv) {
     FATAL_SYS(!input_data);
   }
   
-  err = getMainWave(&wave, &note);
+  err = getMainWave(&wave);
+
   if (err != OK) goto fatal;
 
   pa_err = Pa_Initialize();
@@ -94,11 +159,14 @@ int main(int argc, char **argv) {
   clock time = 0;
   clock increments = 0.00001;
   clock limit = 20;
-  wave_output out;
+  wave_output out = 0;
 
   if (outFile) {
     while (time <= limit) {
-      out = sampleWave(wave, time);
+      for (int i = 0; i < notes_info.length; i++) {
+	out += sampleWave(wave, time, notes_info.notes[i]);
+      }
+      out = out / notes_info.length;
       fprintf(produced_data, "%f %f\n", out, time);
       time += increments;
     }
@@ -112,7 +180,7 @@ int main(int argc, char **argv) {
   
   time = 0;
 
-  timed_wave tw = {&time, wave};
+  synth_data data = {&time, &notes_info, wave};
   
   //opens a stereo output stream in stream with wave as an input
   pa_err = Pa_OpenDefaultStream(&stream,
@@ -123,7 +191,7 @@ int main(int argc, char **argv) {
 				paFramesPerBufferUnspecified,
 				//variable frames per buffer based on the user's machine
 				paWavesWithinWavesCallback,
-				&tw);
+				&data);
   PA_CHECK(pa_err);
   printf("Stream opened\n");
   
