@@ -55,6 +55,6 @@ error_code getMainWave(Wave **out){
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0;
 
-  *out = frequencyWave;
+  *out = mainWave;
   return OK;
 }

@@ -52,7 +52,9 @@ static int paWavesWithinWavesCallback(const void *input,
       current_value += (float) sampleWave(wave, *(data->time), notes[i]);
       notes[i]->pressed_time += 0.000001;
     }
+    //printf("%f\n", current_value);
     current_value = (float) (current_value / data->notes_info->length);
+    //printf("%f\n", current_value);
     //TODO: this is an unsynchronised timer as ALSA does not give correct timings to portaudio
     *out++ = current_value; //left channel set
     *out++ = current_value; //right channel set
@@ -117,7 +119,7 @@ int main(int argc, char **argv) {
 
   notes_data notes_info = {0};
 
-  midi_note note1 = {HELD, 0, 1, 2620}; //pressed down middle c
+  midi_note note1 = {HELD, 0, 1, 262}; //pressed down middle c
   
   addNote(notes_info.notes, &notes_info.length, &note1);
   
@@ -163,6 +165,7 @@ int main(int argc, char **argv) {
 
   if (outFile) {
     while (time <= limit) {
+      out = 0;
       for (int i = 0; i < notes_info.length; i++) {
 	out += sampleWave(wave, time, notes_info.notes[i]);
       }
