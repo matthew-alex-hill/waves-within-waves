@@ -8,8 +8,8 @@
 #include <assert.h>
 
 #define SAMPLE_RATE (44100) //default value
-#define PLAYTIME (5)
-#define NUM_NOTES (8)
+#define PLAYTIME (1)
+#define NUM_NOTES (3)
 
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
@@ -64,7 +64,7 @@ static int paWavesWithinWavesCallback(const void *input,
 }
 
 void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
-  assert(index > 0 && index < NUM_NOTES);
+  assert(index >= 0 && index < NUM_NOTES);
 
   //TODO: clean up memory of this logically removed node
   notes[index] = NULL;
@@ -119,7 +119,11 @@ int main(int argc, char **argv) {
 
   notes_data notes_info = {0};
 
-  midi_note note1 = {HELD, 0, 1, 262}; //pressed down middle c
+  midi_note note1 = {HELD, 0, 1, 2620}; //pressed down middle c
+  midi_note note2 = {HELD, 0, 1, 3000};
+  midi_note note3 = {HELD, 0, 1, 4000};
+  midi_note note4 = {HELD, 0, 1, 5000};
+  midi_note note5 = {HELD, 0, 1, 6000};
   
   addNote(notes_info.notes, &notes_info.length, &note1);
   
@@ -204,7 +208,19 @@ int main(int argc, char **argv) {
   printf("Stream started\n");
   
   Pa_Sleep(PLAYTIME*1000); //plays stream for PLAYTIME seconds
+  addNote(notes_info.notes, &notes_info.length, &note5);
 
+  Pa_Sleep(PLAYTIME*1000);
+
+  addNote(notes_info.notes, &notes_info.length, &note4);
+
+  Pa_Sleep(PLAYTIME*1000);
+  addNote(notes_info.notes, &notes_info.length, &note3);
+
+  Pa_Sleep(PLAYTIME*1000);
+  addNote(notes_info.notes, &notes_info.length, &note2);
+
+  Pa_Sleep(PLAYTIME*1000);
   pa_err = Pa_StopStream(stream);
   PA_CHECK(pa_err);
 
