@@ -136,6 +136,7 @@ int main(int argc, char **argv) {
   int inFile = 0, outFile = 0;
   int device_index;
   char *midiIn, *txtOut;
+  PmEvent midi_messages[MIDI_BUFFER_SIZE];
 
   for (int i = 0; i < Pm_CountDevices(); i++) {
     //check each midi device and output its description and index if it is an input
@@ -147,6 +148,7 @@ int main(int argc, char **argv) {
     }
   }
 
+  //TODO: make this more secure
   printf("Select an input device: ");
   FATAL_PROG((!scanf("%d", &device_index)), ARGUMENT_ERROR);
 
@@ -164,6 +166,16 @@ int main(int argc, char **argv) {
 			MIDI_BUFFER_SIZE,
 			NULL, //using the porttime timer
 			&midi_input_time);
+
+  PM_CHECK(pm_err);
+
+  Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
+  //only read midi messages from channel 1
+
+  PM_CHECK(pm_err);
+
+  Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
+  //only receive note on or note off messages
 
   PM_CHECK(pm_err);
   
