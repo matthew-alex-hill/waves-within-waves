@@ -83,7 +83,7 @@ static int paWavesWithinWavesCallback(const void *input,
 void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
   assert(index >= 0 && index < NUM_NOTES);
 
-  //TODO: clean up memory of this logically removed node
+  free(notes[index]);
   notes[index] = NULL;
 
   //resets notes to occupy first few spaces
@@ -180,14 +180,6 @@ int main(int argc, char **argv) {
   PM_CHECK(pm_err);
   
   notes_data notes_info = {0};
-
-  midi_note note1 = {HELD, 0, 1, 2620}; //pressed down middle c
-  midi_note note2 = {HELD, 0, 1, 3000};
-  midi_note note3 = {HELD, 0, 1, 4000};
-  midi_note note4 = {HELD, 0, 1, 5000};
-  midi_note note5 = {HELD, 0, 1, 6000};
-  
-  addNote(notes_info.notes, &notes_info.length, &note1);
   
   switch (argc) {
   case 1: //no arguments so no files opened
@@ -268,21 +260,46 @@ int main(int argc, char **argv) {
   PA_CHECK(pa_err);
 
   printf("Stream started\n");
-  
-  Pa_Sleep(PLAYTIME*1000); //plays stream for PLAYTIME seconds
-  addNote(notes_info.notes, &notes_info.length, &note5);
 
-  Pa_Sleep(PLAYTIME*1000);
 
-  addNote(notes_info.notes, &notes_info.length, &note4);
+  int no_read;
+  PmEvent *event;
+  midi_note *temp_note;
+  while (1) {
+    no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
+    if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
+      for(int i = 0; i < no_read; i++) {
+	event = &midi_messages[i];
+	if (Pm_MessageStatus(event->message) == (1 << 0x19)) {
+	  //NOTE ON
+	  temp_note = malloc(sizeof(midi_note));
+	  FATAL_PROG(!temp_note, ALLOCATION_FAIL);
+	  temp_note->pressed = HELD;
+	  temp_note->pressed_time = 0;
+	  temp_note->velocity = Pm_MessageData1(event->message);
+	  temp_note->frequency = Pm_MessageData2(event->message);
+	  addNote(notes_info.notes, &notes_info.length, temp_note);
+	} else if (Pm_MessageStatus(event->message) == (1 << 0x18)) {
+	  //NOTE OFF
+	  //search for an active note of that frequency and delete it
+	  //chance the note will have already been removed so wont be found
+	  for (int j = 0; j < notes_info.length; j++) {
+	    if (Pm_MessageData2(event->message) == notes_info.notes[j]->frequency) {
+	      //TODO: implement release of keys and clean up
+	      removeNote(notes_info.notes, &notes_info.length, j);
+	    }
+	  }
+	} else {
+	  printf("Unknown message %d\n", event->message);
+	}
+      }
+    } else {
+      pm_err = no_read;
+      PM_CHECK(pm_err);
+    }
+    Pa_Sleep(1); //may need to be longer
+  }
 
-  Pa_Sleep(PLAYTIME*1000);
-  addNote(notes_info.notes, &notes_info.length, &note3);
-
-  Pa_Sleep(PLAYTIME*1000);
-  addNote(notes_info.notes, &notes_info.length, &note2);
-
-  Pa_Sleep(PLAYTIME*1000);
   pa_err = Pa_StopStream(stream);
   PA_CHECK(pa_err);
 
