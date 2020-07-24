@@ -1,6 +1,8 @@
 #include "utils/wave_generation.h"
 #include "utils/synth_source.h"
 #include "portaudio.h"
+#include "portmidi.h"
+#include "porttime.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -10,9 +12,16 @@
 #define SAMPLE_RATE (44100) //default value
 #define PLAYTIME (1)
 #define NUM_NOTES (3)
+#define MIDI_BUFFER_SIZE (16)
 
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
+
+#define PM_CHECK(err) \
+  do { if (err != pmNoError) goto pm_fatal; } while (0)
+
+#define PT_CHECK(err) \
+  do { if (err != ptNoError) goto pt_fatal; } while (0)
 
 //TODO: move this messy code to somewhere else
 //TODO: comment up these definitions when the structre is finalised
@@ -26,6 +35,14 @@ typedef struct synth_data {
   notes_data *notes_info;
   Wave *wave;
 } synth_data;
+
+/*Callback function used by porttime to keep a clock going throughout the program
+ userData will be a pointer to a clock type variable*/
+static void PtClockIncrement(PtTimestamp timestamp, void *userData) {
+  (void) timestamp;
+  clock *time = (clock *) userData;
+  (*time)+= 0.001;
+}
 
 /*This is the callback function used by portaudio to output audio waveforms
   the parameters are layed out in the portaudio.h documentation */
@@ -113,10 +130,43 @@ void addNote(midi_note *notes[NUM_NOTES], int *length, midi_note *note) {
 int main(int argc, char **argv) {
   error_code err = OK;
   PaError pa_err = paNoError;
+  PmError pm_err = pmNoError;
+  PtError pt_err = ptNoError;
   Wave *wave = NULL;
   int inFile = 0, outFile = 0;
+  int device_index;
   char *midiIn, *txtOut;
 
+  for (int i = 0; i < Pm_CountDevices(); i++) {
+    //check each midi device and output its description and index if it is an input
+    const PmDeviceInfo *device_info = Pm_GetDeviceInfo(i);
+
+    //TODO: I think declaring a variable in a for loop is gross but this is what portmidi do in all their examples
+    if (device_info->input) {
+      printf("%d: %s %s\n", i, device_info->interf, device_info->name);
+    }
+  }
+
+  printf("Select an input device: ");
+  FATAL_PROG((!scanf("%d", &device_index)), ARGUMENT_ERROR);
+
+  PortMidiStream *midi_input_stream;
+  clock midi_input_time;
+
+  pt_err = Pt_Start(1, PtClockIncrement, &midi_input_time); //starts a clock o increment once every millisecond
+  //TODO: remove magic number
+
+  PT_CHECK(pt_err);
+  
+  pm_err = Pm_OpenInput(&midi_input_stream,
+			device_index,
+			NULL, //No specific drivers needed
+			MIDI_BUFFER_SIZE,
+			NULL, //using the porttime timer
+			&midi_input_time);
+
+  PM_CHECK(pm_err);
+  
   notes_data notes_info = {0};
 
   midi_note note1 = {HELD, 0, 1, 2620}; //pressed down middle c
@@ -227,6 +277,9 @@ int main(int argc, char **argv) {
   printf("Stream stopped\n");
   pa_err = Pa_CloseStream(stream);
   PA_CHECK(pa_err);
+
+  pm_err = Pm_Close(midi_input_stream);
+  PM_CHECK(pm_err);
 				
   pa_err = Pa_Terminate();
   PA_CHECK(pa_err);
@@ -252,4 +305,14 @@ int main(int argc, char **argv) {
  pa_fatal:
   printf("PortAudio error: %s\n", Pa_GetErrorText(pa_err));
   return EXIT_FAILURE;
+
+ pm_fatal:
+  printf("PortMidi error: %s\n", Pm_GetErrorText(pm_err));
+  return EXIT_FAILURE;
+
+ pt_fatal:
+  //TODO: manually code in pt error messages
+  printf("PortTime error but i cant tell you what it is\n");
+  return EXIT_FAILURE;
+  
 }
