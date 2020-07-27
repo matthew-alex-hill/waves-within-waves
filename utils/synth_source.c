@@ -47,7 +47,7 @@ error_code getMainWave(Wave **out){
   mainWave->base.content.value = 0;
 
   mainWave->frequency.isValue = 2;
-  mainWave->frequency.content.value = FREQUENCY;
+  mainWave->frequency.content.midi_value = 2600;
 
   mainWave->amplitude.isValue = 0;
   mainWave->amplitude.content.nested_wave = amplitudeWave;

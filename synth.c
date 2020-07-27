@@ -39,9 +39,8 @@ typedef struct synth_data {
 /*Callback function used by porttime to keep a clock going throughout the program
  userData will be a pointer to a clock type variable*/
 static void PtClockIncrement(PtTimestamp timestamp, void *userData) {
-  (void) timestamp;
   clock *time = (clock *) userData;
-  (*time)+= 0.001;
+  (*time) = timestamp;
 }
 
 /*This is the callback function used by portaudio to output audio waveforms
@@ -69,9 +68,9 @@ static int paWavesWithinWavesCallback(const void *input,
       current_value += (float) sampleWave(wave, *(data->time), notes[i]);
       notes[i]->pressed_time += 0.000001;
     }
-    //printf("%f\n", current_value);
-    current_value = (float) (current_value / data->notes_info->length);
-    //printf("%f\n", current_value);
+    if (data->notes_info->length != 0) {
+      current_value = (float) (current_value / data->notes_info->length);
+    }
     //TODO: this is an unsynchronised timer as ALSA does not give correct timings to portaudio
     *out++ = current_value; //left channel set
     *out++ = current_value; //right channel set
@@ -83,6 +82,7 @@ static int paWavesWithinWavesCallback(const void *input,
 void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
   assert(index >= 0 && index < NUM_NOTES);
 
+  //TODO: find the source of this problem as a note shouldn't be removed twice
   free(notes[index]);
   notes[index] = NULL;
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   //TODO: make this more secure
   printf("Select an input device: ");
   FATAL_PROG((!scanf("%d", &device_index)), ARGUMENT_ERROR);
-
+  
   PortMidiStream *midi_input_stream;
   clock midi_input_time;
 
@@ -169,15 +169,15 @@ int main(int argc, char **argv) {
 
   PM_CHECK(pm_err);
 
-  Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
+
+  //TODO: add this filtering back
+  //Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
   //only read midi messages from channel 1
+  //PM_CHECK(pm_err);
 
-  PM_CHECK(pm_err);
-
-  Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
+  //Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
   //only receive note on or note off messages
-
-  PM_CHECK(pm_err);
+  //PM_CHECK(pm_err);
   
   notes_data notes_info = {0};
   
@@ -221,13 +221,18 @@ int main(int argc, char **argv) {
   clock limit = 20;
   wave_output out = 0;
 
+  midi_note note = {HELD, 0, 1, 2600};
+  addNote(notes_info.notes, &notes_info.length, &note);
   if (outFile) {
     while (time <= limit) {
       out = 0;
       for (int i = 0; i < notes_info.length; i++) {
 	out += sampleWave(wave, time, notes_info.notes[i]);
       }
-      out = out / notes_info.length;
+
+      if (notes_info.length) {
+	out = out / notes_info.length;
+      }
       fprintf(produced_data, "%f %f\n", out, time);
       time += increments;
     }
@@ -265,42 +270,44 @@ int main(int argc, char **argv) {
   int no_read;
   PmEvent *event;
   midi_note *temp_note;
-  while (1) {
+
+  while (midi_input_time < 30000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
       for(int i = 0; i < no_read; i++) {
 	event = &midi_messages[i];
-	if (Pm_MessageStatus(event->message) == (1 << 0x19)) {
+	if (Pm_MessageStatus(event->message) == 144) {
 	  //NOTE ON
 	  temp_note = malloc(sizeof(midi_note));
 	  FATAL_PROG(!temp_note, ALLOCATION_FAIL);
 	  temp_note->pressed = HELD;
 	  temp_note->pressed_time = 0;
-	  temp_note->velocity = Pm_MessageData1(event->message);
-	  temp_note->frequency = Pm_MessageData2(event->message);
+	  temp_note->velocity = Pm_MessageData2(event->message);
+	  temp_note->frequency = Pm_MessageData1(event->message);
 	  addNote(notes_info.notes, &notes_info.length, temp_note);
-	} else if (Pm_MessageStatus(event->message) == (1 << 0x18)) {
+	} else if (Pm_MessageStatus(event->message) == 128) {
 	  //NOTE OFF
 	  //search for an active note of that frequency and delete it
 	  //chance the note will have already been removed so wont be found
 	  for (int j = 0; j < notes_info.length; j++) {
-	    if (Pm_MessageData2(event->message) == notes_info.notes[j]->frequency) {
+	    if (Pm_MessageData1(event->message) == notes_info.notes[j]->frequency) {
 	      //TODO: implement release of keys and clean up
 	      removeNote(notes_info.notes, &notes_info.length, j);
 	    }
 	  }
 	} else {
-	  printf("Unknown message %d\n", event->message);
+	  printf("Unknown message %d\n", Pm_MessageStatus(event->message));
 	}
       }
     } else {
       pm_err = no_read;
       PM_CHECK(pm_err);
     }
-    Pa_Sleep(1); //may need to be longer
+    Pa_Sleep(100); //may need to be longer
   }
 
-  pa_err = Pa_StopStream(stream);
+  printf("exited while loop\n");
+  pa_err = Pa_AbortStream(stream);
   PA_CHECK(pa_err);
 
   printf("Stream stopped\n");
