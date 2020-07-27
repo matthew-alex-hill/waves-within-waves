@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
   wave_output out = 0;
 
   midi_note *note = malloc(sizeof(midi_note));
-  note->frequency = 2600;
+  note->frequency = 60;
   
   addNote(notes_info.notes, &notes_info.length, note);
   if (outFile) {
@@ -272,6 +272,7 @@ int main(int argc, char **argv) {
   PmEvent *event;
   midi_note *temp_note;
 
+  Pa_Sleep(PLAYTIME * 1000);
   while (midi_input_time < 30000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {

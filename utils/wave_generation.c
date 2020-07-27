@@ -15,7 +15,7 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) 
     return sampleWave(nested, time, note);
   } else {
     if (waveValue->content.midi_value == FREQUENCY) {
-      return note->frequency;
+      return (440 * pow(2, (note->frequency - 69)/12));
     }
     return note->velocity;
   }
@@ -85,7 +85,9 @@ wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output f
   default_wave_maker makers[EMPTY+1] = {getSaw, getSine, getSquare, getTriangle, getEmpty};
 
   //wave shape used to index the array
-  return makers[shape] (base, frequency, amplitude, phase, time);
+  wave_output out = makers[shape] (base, frequency, amplitude, phase, time);
+  //printf("%d\n", out);
+  return out;
 }
 
 char *getProgramError(error_code e) {
