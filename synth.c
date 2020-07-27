@@ -82,7 +82,6 @@ static int paWavesWithinWavesCallback(const void *input,
 void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
   assert(index >= 0 && index < NUM_NOTES);
 
-  //TODO: find the source of this problem as a note shouldn't be removed twice
   free(notes[index]);
   notes[index] = NULL;
 
@@ -221,8 +220,10 @@ int main(int argc, char **argv) {
   clock limit = 20;
   wave_output out = 0;
 
-  midi_note note = {HELD, 0, 1, 2600};
-  addNote(notes_info.notes, &notes_info.length, &note);
+  midi_note *note = malloc(sizeof(midi_note));
+  note->frequency = 2600;
+  
+  addNote(notes_info.notes, &notes_info.length, note);
   if (outFile) {
     while (time <= limit) {
       out = 0;
