@@ -9,10 +9,11 @@
 #include <string.h>
 #include <assert.h>
 
-//#define DEBUG
+//#define DEBUG //Uncomment me for debuggging information in runtime
 #define SAMPLE_RATE (44100) //default value
 #define PLAYTIME (1)
-#define NUM_NOTES (3)
+#define NUM_NOTES (8)
+#define LATENCY (5)
 #define MIDI_BUFFER_SIZE (16)
 
 #define PA_CHECK(err) \
@@ -67,7 +68,9 @@ static int paWavesWithinWavesCallback(const void *input,
     current_value = 0;
     for(int i = 0; i < data->notes_info->length; i++) {
       current_value += (float) sampleWave(wave, *(data->time), notes[i]);
-      notes[i]->pressed_time += 0.000001;
+      //TODO: segfaulting bug caused here
+      notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
+      //TODO: delete waves past release point
     }
     if (data->notes_info->length != 0) {
       current_value = (float) (current_value / data->notes_info->length);
@@ -75,7 +78,7 @@ static int paWavesWithinWavesCallback(const void *input,
     //TODO: this is an unsynchronised timer as ALSA does not give correct timings to portaudio
     *out++ = current_value; //left channel set
     *out++ = current_value; //right channel set
-    *(data->time) += 0.000001;
+    *(data->time) += (clock) 1 / SAMPLE_RATE;
   }
   return 0;
 }
@@ -294,7 +297,7 @@ int main(int argc, char **argv) {
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
       for(int i = 0; i < no_read; i++) {
 	event = &midi_messages[i];
-	if (Pm_MessageStatus(event->message) == 145) {
+	if (Pm_MessageStatus(event->message) == 144) {
 	  //NOTE ON
 	  temp_note = malloc(sizeof(midi_note));
 	  FATAL_PROG(!temp_note, ALLOCATION_FAIL);
@@ -303,14 +306,17 @@ int main(int argc, char **argv) {
 	  temp_note->velocity = Pm_MessageData2(event->message);
 	  temp_note->frequency = Pm_MessageData1(event->message);
 	  addNote(notes_info.notes, &notes_info.length, temp_note);
-	} else if (Pm_MessageStatus(event->message) == 129) {
+	} else if (Pm_MessageStatus(event->message) == 128) {
 	  //NOTE OFF
 	  //search for an active note of that frequency and delete it
 	  //chance the note will have already been removed so wont be found
 	  for (int j = 0; j < notes_info.length; j++) {
 	    if (Pm_MessageData1(event->message) == notes_info.notes[j]->frequency) {
-	      //TODO: implement release of keys and clean up
-	      removeNote(notes_info.notes, &notes_info.length, j);
+	      notes_info.notes[j]->pressed = RELEASED;
+	      notes_info.notes[j]->pressed_time = 0;
+              #ifdef DEBUG
+	      printf("releasing key %d\n", notes_info.notes[j]->frequency);
+	      #endif
 	    }
 	  }
 	} else {
@@ -323,7 +329,7 @@ int main(int argc, char **argv) {
       pm_err = no_read;
       PM_CHECK(pm_err);
     }
-    Pa_Sleep(10); //may need to be longer
+    Pa_Sleep(LATENCY); 
   }
 
 

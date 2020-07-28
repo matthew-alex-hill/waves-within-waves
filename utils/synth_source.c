@@ -19,27 +19,52 @@ error_code getMainWave(Wave **out){
   frequencyWave->base.isValue = 2;
   frequencyWave->base.content.midi_value = FREQUENCY;
 
-  frequencyWave->frequency.isValue = 0;
-  frequencyWave->frequency.content.nested_wave = amplitudeWave;
+  frequencyWave->frequency.isValue = 1;
+  frequencyWave->frequency.content.value = 1;
 
   frequencyWave->amplitude.isValue = 1;
-  frequencyWave->amplitude.content.value = 50;
+  frequencyWave->amplitude.content.nested_wave = amplitudeWave;
 
   frequencyWave->phase.isValue = 1;
   frequencyWave->phase.content.value = 0;
+
+  frequencyWave->attack.isValue = 1;
+  frequencyWave->attack.content.value = 0;
+
+  frequencyWave->decay.isValue = 1;
+  frequencyWave->decay.content.value = 0;
+
+  frequencyWave->sustain.isValue = 1;
+  frequencyWave->sustain.content.value = 1;
+
+  frequencyWave->release.isValue = 1;
+  frequencyWave->release.content.value = 0;
   
-  amplitudeWave->shape = SINE;
+  amplitudeWave->shape = SQUARE;
 
   amplitudeWave->base.isValue = 1;
-  amplitudeWave->base.content.value = 50;
+  amplitudeWave->base.content.value = 25;
 
   amplitudeWave->frequency.isValue = 1;
   amplitudeWave->frequency.content.value = 0.5;
+
   amplitudeWave->amplitude.isValue = 1;
-  amplitudeWave->amplitude.content.value = 10;
+  amplitudeWave->amplitude.content.value = 25;
 
   amplitudeWave->phase.isValue = 1;
   amplitudeWave->phase.content.value = 0;
+
+  amplitudeWave->attack.isValue = 1;
+  amplitudeWave->attack.content.value = 0;
+
+  amplitudeWave->decay.isValue = 1;
+  amplitudeWave->decay.content.value = 0;
+
+  amplitudeWave->sustain.isValue = 1;
+  amplitudeWave->sustain.content.value = 1;
+
+  amplitudeWave->release.isValue = 1;
+  amplitudeWave->release.content.value = 0;
   
   mainWave->shape = SAW;
   mainWave->base.isValue = 1;
@@ -53,6 +78,20 @@ error_code getMainWave(Wave **out){
 
   mainWave->phase.isValue = 1;
   mainWave->phase.content.value = 0;
+
+  mainWave->attack.isValue = 1;
+  mainWave->attack.content.value = 1;
+
+  mainWave->decay.isValue = 1;
+  mainWave->decay.content.value = 0.5;
+
+  mainWave->sustain.isValue = 1;
+  mainWave->sustain.content.value = 0.4;
+
+  mainWave->release.isValue = 1;
+  mainWave->release.content.value = 3;
+
+  
 
   *out = mainWave;
   return OK;

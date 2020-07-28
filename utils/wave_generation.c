@@ -17,7 +17,7 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) 
     if (waveValue->content.midi_value == FREQUENCY) {
       return (440 * pow(2, (note->frequency - 69)/12));
     }
-    return note->velocity;
+    return note->velocity / 128;
   }
 }
 
@@ -30,9 +30,36 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
   amplitude = getValue(&wave->amplitude, time, note);
   phase = getValue(&wave->phase, time, note);
   
-  //TODO: add these once implementation is available
-  //wave_output attack, decay, sustain, release;
+  wave_output attack, decay, sustain, release;
 
+  attack = getValue(&wave->attack, time, note);
+  decay = getValue(&wave->decay, time, note);
+  sustain = getValue(&wave->sustain, time, note);
+  release = getValue(&wave->release, time, note);
+
+  wave_output dampner = 0;
+ 
+  if (note->pressed == HELD) {
+    if (note->pressed_time < attack) {
+      //attacking
+      dampner = note->pressed_time / attack;
+    } else if (note->pressed_time < attack + decay) {
+      //decaying
+      dampner = 1 + (sustain - 1) * ((note->pressed_time - attack) / decay);
+    } else {
+      //sustaining
+      dampner = sustain;
+    }
+  } else {
+    //releasing
+    dampner = sustain - note->pressed_time * (sustain / release);
+  }
+
+  amplitude = amplitude * dampner;
+  if (amplitude <= 0) {
+    return 0;
+  }
+  
   return sampleStandardWave(wave->shape, base, frequency, amplitude, phase, time);
 }
 

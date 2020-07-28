@@ -101,12 +101,10 @@ typedef struct wave_struct {
   wave_value amplitude; //maximum displacement from base
   wave_value phase;     //how far along the wave begins
 
-  /* TODO: Figure out how to implement these into waveforms
   wave_value attack;
   wave_value decay;
   wave_value sustain;
   wave_value release;
-  */
 } Wave;
 
 /* get an output value from a wave at a given time
