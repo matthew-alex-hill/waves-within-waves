@@ -9,6 +9,7 @@
 #include <string.h>
 #include <assert.h>
 
+//#define DEBUG
 #define SAMPLE_RATE (44100) //default value
 #define PLAYTIME (1)
 #define NUM_NOTES (3)
@@ -82,6 +83,10 @@ static int paWavesWithinWavesCallback(const void *input,
 void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
   assert(index >= 0 && index < NUM_NOTES);
 
+  #ifdef DEBUG
+  printf("removing index %d\n", index);
+  #endif
+  
   free(notes[index]);
   notes[index] = NULL;
 
@@ -92,10 +97,17 @@ void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
   //removes duplicate pointer
   notes[*length] = NULL;
   (*length)--;
+  #ifdef DEBUG
+  printf("new length = %d\n", *length);
+  #endif
 }
 
 void addNote(midi_note *notes[NUM_NOTES], int *length, midi_note *note) {
   assert(*length <= NUM_NOTES);
+
+  #ifdef DEBUG
+  printf("adding to index %d\n", *length);
+  #endif
   if (*length == NUM_NOTES) {
     //remove the longest running note / first released note
     note_status max_status = HELD;
@@ -123,6 +135,10 @@ void addNote(midi_note *notes[NUM_NOTES], int *length, midi_note *note) {
 
   notes[*length] = note;
   (*length)++;
+
+  #ifdef DEBUG
+  printf("new length =  %d\n", *length);
+  #endif
 }
 
 /* main program loop that loads the wave and plays it */
@@ -221,7 +237,7 @@ int main(int argc, char **argv) {
   wave_output out = 0;
 
   midi_note *note = malloc(sizeof(midi_note));
-  note->frequency = 60;
+  note->frequency = 120;
   
   addNote(notes_info.notes, &notes_info.length, note);
   if (outFile) {
@@ -242,6 +258,8 @@ int main(int argc, char **argv) {
 
     printf("File output completed\n");
   }
+
+  removeNote(notes_info.notes, &notes_info.length, 0); //removes testing note
   
   PaStream *stream;
   
@@ -267,18 +285,16 @@ int main(int argc, char **argv) {
 
   printf("Stream started\n");
 
-
   int no_read;
   PmEvent *event;
   midi_note *temp_note;
 
-  Pa_Sleep(PLAYTIME * 1000);
   while (midi_input_time < 30000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
       for(int i = 0; i < no_read; i++) {
 	event = &midi_messages[i];
-	if (Pm_MessageStatus(event->message) == 144) {
+	if (Pm_MessageStatus(event->message) == 145) {
 	  //NOTE ON
 	  temp_note = malloc(sizeof(midi_note));
 	  FATAL_PROG(!temp_note, ALLOCATION_FAIL);
@@ -287,7 +303,7 @@ int main(int argc, char **argv) {
 	  temp_note->velocity = Pm_MessageData2(event->message);
 	  temp_note->frequency = Pm_MessageData1(event->message);
 	  addNote(notes_info.notes, &notes_info.length, temp_note);
-	} else if (Pm_MessageStatus(event->message) == 128) {
+	} else if (Pm_MessageStatus(event->message) == 129) {
 	  //NOTE OFF
 	  //search for an active note of that frequency and delete it
 	  //chance the note will have already been removed so wont be found
@@ -298,17 +314,19 @@ int main(int argc, char **argv) {
 	    }
 	  }
 	} else {
+	  #ifdef DEBUG
 	  printf("Unknown message %d\n", Pm_MessageStatus(event->message));
+	  #endif
 	}
       }
     } else {
       pm_err = no_read;
       PM_CHECK(pm_err);
     }
-    Pa_Sleep(100); //may need to be longer
+    Pa_Sleep(10); //may need to be longer
   }
 
-  printf("exited while loop\n");
+
   pa_err = Pa_AbortStream(stream);
   PA_CHECK(pa_err);
 
