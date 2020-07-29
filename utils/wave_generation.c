@@ -37,7 +37,7 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
   sustain = getValue(&wave->sustain, time, note);
   release = getValue(&wave->release, time, note);
 
-  wave_output dampner = 0;
+  wave_output dampner = 1;
  
   if (note->pressed == HELD) {
     if (note->pressed_time < attack) {
@@ -50,7 +50,7 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
       //sustaining
       dampner = sustain;
     }
-  } else {
+  } else if (release > 0) {
     //releasing
     dampner = sustain - note->pressed_time * (sustain / release);
   }

@@ -20,7 +20,7 @@ error_code getMainWave(Wave **out){
   frequencyWave->base.content.midi_value = FREQUENCY;
 
   frequencyWave->frequency.isValue = 1;
-  frequencyWave->frequency.content.value = 1;
+  frequencyWave->frequency.content.value = 10;
 
   frequencyWave->amplitude.isValue = 1;
   frequencyWave->amplitude.content.nested_wave = amplitudeWave;
@@ -40,38 +40,38 @@ error_code getMainWave(Wave **out){
   frequencyWave->release.isValue = 1;
   frequencyWave->release.content.value = 0;
   
-  amplitudeWave->shape = SQUARE;
+  amplitudeWave->shape = EMPTY;
 
   amplitudeWave->base.isValue = 1;
-  amplitudeWave->base.content.value = 25;
+  amplitudeWave->base.content.value = 250;
 
   amplitudeWave->frequency.isValue = 1;
-  amplitudeWave->frequency.content.value = 0.5;
+  amplitudeWave->frequency.content.value = 0;
 
   amplitudeWave->amplitude.isValue = 1;
-  amplitudeWave->amplitude.content.value = 25;
+  amplitudeWave->amplitude.content.value = 0;
 
   amplitudeWave->phase.isValue = 1;
   amplitudeWave->phase.content.value = 0;
 
   amplitudeWave->attack.isValue = 1;
-  amplitudeWave->attack.content.value = 0;
+  amplitudeWave->attack.content.value = 0.5;
 
   amplitudeWave->decay.isValue = 1;
-  amplitudeWave->decay.content.value = 0;
+  amplitudeWave->decay.content.value = 2;
 
   amplitudeWave->sustain.isValue = 1;
-  amplitudeWave->sustain.content.value = 1;
+  amplitudeWave->sustain.content.value = 0.5;
 
   amplitudeWave->release.isValue = 1;
-  amplitudeWave->release.content.value = 0;
+  amplitudeWave->release.content.value = 0.5;
   
   mainWave->shape = SAW;
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
-  mainWave->frequency.isValue = 0;
-  mainWave->frequency.content.nested_wave = frequencyWave;
+  mainWave->frequency.isValue = 2;
+  mainWave->frequency.content.midi_value = FREQUENCY;
 
   mainWave->amplitude.isValue = 1;
   mainWave->amplitude.content.value = 1;
