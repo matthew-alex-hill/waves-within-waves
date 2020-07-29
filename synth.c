@@ -1,8 +1,7 @@
 #include "utils/wave_generation.h"
 #include "utils/synth_source.h"
+#include "utils/midi_management.h"
 #include "portaudio.h"
-#include "portmidi.h"
-#include "porttime.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -10,40 +9,23 @@
 #include <assert.h>
 
 //#define DEBUG //Uncomment me for debuggging information in runtime
-#define SAMPLE_RATE (44100) //default value
-#define PLAYTIME (1)
-#define NUM_NOTES (8)
-#define LATENCY (5)
-#define MIDI_BUFFER_SIZE (16)
 
+//the default sample rate for portaudio to use, how many times the callback is called every second
+#define SAMPLE_RATE (44100)
+
+//CURRENTLY UNUSED
+//The number of seconds to play any test audio for
+#define PLAYTIME (1)
+
+//error checker for portaudio
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
-
-#define PM_CHECK(err) \
-  do { if (err != pmNoError) goto pm_fatal; } while (0)
-
-#define PT_CHECK(err) \
-  do { if (err != ptNoError) goto pt_fatal; } while (0)
-
-//TODO: move this messy code to somewhere else
-//TODO: comment up these definitions when the structre is finalised
-typedef struct midi_notes_data {
-  midi_note *notes[NUM_NOTES];
-  int length;
-} notes_data;
 
 typedef struct synth_data {
   clock *time;
   notes_data *notes_info;
   Wave *wave;
 } synth_data;
-
-/*Callback function used by porttime to keep a clock going throughout the program
- userData will be a pointer to a clock type variable*/
-static void PtClockIncrement(PtTimestamp timestamp, void *userData) {
-  clock *time = (clock *) userData;
-  (*time) = timestamp;
-}
 
 /*This is the callback function used by portaudio to output audio waveforms
   the parameters are layed out in the portaudio.h documentation */
@@ -56,9 +38,10 @@ static int paWavesWithinWavesCallback(const void *input,
   (void) input;
   (void) timeInfo;
   (void) statusFlags;
-  //TODO: include timeInfo and status flags
   float *out = (float *) output;
   synth_data *data = (synth_data *) userData;
+  
+  //extracting key items from data for clarity in the rest of the function
   Wave *wave = data->wave;
   midi_note **notes = data->notes_info->notes;
   
@@ -70,6 +53,8 @@ static int paWavesWithinWavesCallback(const void *input,
       current_value += (float) sampleWave(wave, *(data->time), notes[i]);
       //TODO: segfaulting bug caused here
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
+
+      //if the note has been released and has fell to 0 volume, delete it
       if (notes[i]->pressed == RELEASED && notes[i]->pressed_time > notes[i]->release) {
 	removeNote(notes, &data->notes_info->length, i);
       }
@@ -85,89 +70,35 @@ static int paWavesWithinWavesCallback(const void *input,
   return 0;
 }
 
-void removeNote(midi_note *notes[NUM_NOTES], int *length, int index) {
-  assert(index >= 0 && index < NUM_NOTES);
-
-  #ifdef DEBUG
-  printf("removing index %d\n", index);
-  #endif
-  
-  free(notes[index]);
-  notes[index] = NULL;
-
-  //resets notes to occupy first few spaces
-  for (int i = index; i < *length; i++){
-    notes[i] = notes[i+1];
-  }
-  //removes duplicate pointer
-  notes[*length] = NULL;
-  (*length)--;
-  #ifdef DEBUG
-  printf("new length = %d\n", *length);
-  #endif
-}
-
-void addNote(midi_note *notes[NUM_NOTES], int *length, midi_note *note) {
-  assert(*length <= NUM_NOTES);
-
-  #ifdef DEBUG
-  printf("adding to index %d\n", *length);
-  #endif
-  if (*length == NUM_NOTES) {
-    //remove the longest running note / first released note
-    note_status max_status = HELD;
-    clock max_note_time = 0;
-    int max;
-    for (int i = 0; i < *length; i++) {
-      if (notes[i]->pressed == HELD) {
-	if (max_status == HELD && notes[i]->pressed_time > max_note_time) {
-	  max_note_time = notes[i]->pressed_time;
-	  max = i;
-	}
-      } else {
-	if (max_status == HELD) {
-	  max_status = RELEASED;
-	  max_note_time = notes[i]->pressed_time;
-	  max = i;
-	} else if (max_note_time < notes[i]->pressed_time) {
-	  max_note_time = notes[i]->pressed_time;
-	  max = i;
-	}
-      }
-    }
-    removeNote(notes, length, max);
-  }
-
-  notes[*length] = note;
-  (*length)++;
-
-  #ifdef DEBUG
-  printf("new length =  %d\n", *length);
-  #endif
-}
-
 /* main program loop that loads the wave and plays it */
 int main(int argc, char **argv) {
+
+  //error codes for my own code and each used portmedia module
   error_code err = OK;
   PaError pa_err = paNoError;
   PmError pm_err = pmNoError;
   PtError pt_err = ptNoError;
   Wave *wave = NULL;
+
+  //booleans stating whether there are input and output files
   int inFile = 0, outFile = 0;
   int device_index;
+
+  //filenames for loaded files
   char *midiIn, *txtOut;
+
+  //buffer used to read midi messages into by portmidi
   PmEvent midi_messages[MIDI_BUFFER_SIZE];
 
   for (int i = 0; i < Pm_CountDevices(); i++) {
     //check each midi device and output its description and index if it is an input
     const PmDeviceInfo *device_info = Pm_GetDeviceInfo(i);
 
-    //TODO: I think declaring a variable in a for loop is gross but this is what portmidi do in all their examples
     if (device_info->input) {
       printf("%d: %s %s\n", i, device_info->interf, device_info->name);
     }
   }
-
+  
   //TODO: make this more secure
   printf("Select an input device: ");
   FATAL_PROG((!scanf("%d", &device_index)), ARGUMENT_ERROR);
@@ -175,11 +106,11 @@ int main(int argc, char **argv) {
   PortMidiStream *midi_input_stream;
   clock midi_input_time;
 
-  pt_err = Pt_Start(1, PtClockIncrement, &midi_input_time); //starts a clock o increment once every millisecond
-  //TODO: remove magic number
+  pt_err = Pt_Start(LATENCY, PtClockIncrement, &midi_input_time); //starts a clock o increment once every millisecond
 
   PT_CHECK(pt_err);
-  
+
+  //opens midi_input_stream using the selected device by the user
   pm_err = Pm_OpenInput(&midi_input_stream,
 			device_index,
 			NULL, //No specific drivers needed
@@ -189,18 +120,18 @@ int main(int argc, char **argv) {
 
   PM_CHECK(pm_err);
 
-
-  //TODO: add this filtering back
-  //Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
   //only read midi messages from channel 1
-  //PM_CHECK(pm_err);
+  Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
+  PM_CHECK(pm_err);
 
-  //Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
   //only receive note on or note off messages
-  //PM_CHECK(pm_err);
-  
+  Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
+  PM_CHECK(pm_err);
+
+  //structure used to pass the list of notes to the portaudio callback
   notes_data notes_info = {0};
-  
+
+  //select boot mode
   switch (argc) {
   case 1: //no arguments so no files opened
     break;
@@ -215,6 +146,7 @@ int main(int argc, char **argv) {
     FATAL_PROG(1, ARGUMENT_ERROR);
   }
 
+  //load files where necessary
   FILE * produced_data = NULL, *input_data = NULL;
   
   if (outFile) {
@@ -226,7 +158,8 @@ int main(int argc, char **argv) {
     input_data = fopen(midiIn, "w");
     FATAL_SYS(!input_data);
   }
-  
+
+  //loads the wave data structure outlined in synth_source.c
   err = getMainWave(&wave);
 
   if (err != OK) goto fatal;
@@ -236,15 +169,19 @@ int main(int argc, char **argv) {
 
   printf("initialisation completed\n");
 
+  //parameters used to produce the output graph
   clock time = 0;
   clock increments = 0.00001;
   clock limit = 20;
   wave_output out = 0;
 
+  //default note, a middle c
   midi_note *note = malloc(sizeof(midi_note));
   note->frequency = 120;
-  
+
   addNote(notes_info.notes, &notes_info.length, note);
+
+  //file output for graph plotting
   if (outFile) {
     while (time <= limit) {
       out = 0;
@@ -271,6 +208,7 @@ int main(int argc, char **argv) {
   
   time = 0;
 
+  //data struct passed to portaudio callback as userData
   synth_data data = {&time, &notes_info, wave};
   
   //opens a stereo output stream in stream with wave as an input
@@ -291,51 +229,66 @@ int main(int argc, char **argv) {
 
   printf("Stream started\n");
 
-  int no_read;
-  PmEvent *event;
-  midi_note *temp_note;
+  //data used when reading midi messages
+  int no_read; //indicates the number of messages read
+  PmEvent *event; //the urrent evet being decoded
+  midi_note *temp_note; //temporary pointer used to add notes to notes_info
 
+  //TODO: add user controlled while loop exit condition
   while (midi_input_time < 30000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
+    
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
+      //decode all new midi messages
       for(int i = 0; i < no_read; i++) {
 	event = &midi_messages[i];
 	if (Pm_MessageStatus(event->message) == 144) {
 	  //NOTE ON
 	  temp_note = malloc(sizeof(midi_note));
 	  FATAL_PROG(!temp_note, ALLOCATION_FAIL);
+
+	  //initialise a new note with the given velocity and frequency
 	  temp_note->pressed = HELD;
 	  temp_note->pressed_time = 0;
 	  temp_note->velocity = Pm_MessageData2(event->message);
 	  temp_note->frequency = Pm_MessageData1(event->message);
+
+	  //add the notes to notes_info
 	  addNote(notes_info.notes, &notes_info.length, temp_note);
+
+#ifdef DEBUG
+	  printf("adding key %d\n", notes_info.notes[j]->frequency);
+#endif
 	} else if (Pm_MessageStatus(event->message) == 128) {
 	  //NOTE OFF
-	  //search for an active note of that frequency and delete it
+	  //search for an active note of that frequency and release it
 	  //chance the note will have already been removed so wont be found
 	  for (int j = 0; j < notes_info.length; j++) {
 	    if (Pm_MessageData1(event->message) == notes_info.notes[j]->frequency) {
+	      //sets notes to released state so ADSR can fade them out
 	      notes_info.notes[j]->pressed = RELEASED;
 	      notes_info.notes[j]->pressed_time = 0;
-              #ifdef DEBUG
+#ifdef DEBUG
 	      printf("releasing key %d\n", notes_info.notes[j]->frequency);
-	      #endif
+#endif
 	    }
 	  }
 	} else {
-	  #ifdef DEBUG
+	  //a currently unsupported message
+#ifdef DEBUG
 	  printf("Unknown message %d\n", Pm_MessageStatus(event->message));
-	  #endif
+#endif
 	}
       }
     } else {
+	      //a portmidi error has occured or nothing was read, if nothing read pm_err is OK
       pm_err = no_read;
       PM_CHECK(pm_err);
     }
     Pa_Sleep(LATENCY); 
   }
 
-
+  //closing the port media streams
   pa_err = Pa_AbortStream(stream);
   PA_CHECK(pa_err);
 
@@ -354,8 +307,13 @@ int main(int argc, char **argv) {
     FATAL_SYS(fclose(input_data));
   }
  fatal:
-
+  //close the program and check for any errors
   freeWave(wave);
+
+  //free remaining notes
+  for (int i = 0; i < notes_info.length; i++) {
+    free(notes_info.notes[i]);
+  }
   
   if (err == OK) {
     return EXIT_SUCCESS;
