@@ -70,7 +70,9 @@ static int paWavesWithinWavesCallback(const void *input,
       current_value += (float) sampleWave(wave, *(data->time), notes[i]);
       //TODO: segfaulting bug caused here
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
-      //TODO: delete waves past release point
+      if (notes[i]->pressed == RELEASED && notes[i]->pressed_time > notes[i]->release) {
+	removeNote(notes, &data->notes_info->length, i);
+      }
     }
     if (data->notes_info->length != 0) {
       current_value = (float) (current_value / data->notes_info->length);
@@ -248,6 +250,7 @@ int main(int argc, char **argv) {
       out = 0;
       for (int i = 0; i < notes_info.length; i++) {
 	out += sampleWave(wave, time, notes_info.notes[i]);
+	notes_info.notes[i]->pressed_time += increments;
       }
 
       if (notes_info.length) {

@@ -29,30 +29,33 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
   frequency = getValue(&wave->frequency, time, note);
   amplitude = getValue(&wave->amplitude, time, note);
   phase = getValue(&wave->phase, time, note);
-  
-  wave_output attack, decay, sustain, release;
 
-  attack = getValue(&wave->attack, time, note);
-  decay = getValue(&wave->decay, time, note);
-  sustain = getValue(&wave->sustain, time, note);
-  release = getValue(&wave->release, time, note);
-
-  wave_output dampner = 1;
+  if (note->pressed_time == 0) {
+    //sets ADSR only once so it can vary with wave functions more noticeably
+    if (note->pressed == HELD) {
+      note->attack = getValue(&wave->attack, time, note);
+      note->decay = getValue(&wave->decay, time, note);
+      note->sustain = getValue(&wave->sustain, time, note);
+    } else {
+      note->release = getValue(&wave->release, time, note);
+    }
+  }
+  wave_output dampner = 0;
  
   if (note->pressed == HELD) {
-    if (note->pressed_time < attack) {
+    if (note->pressed_time < note->attack) {
       //attacking
-      dampner = note->pressed_time / attack;
-    } else if (note->pressed_time < attack + decay) {
+      dampner = note->pressed_time / note->attack;
+    } else if (note->pressed_time < note->attack + note->decay) {
       //decaying
-      dampner = 1 + (sustain - 1) * ((note->pressed_time - attack) / decay);
+      dampner = 1 + (note->sustain - 1) * ((note->pressed_time - note->attack) / note->decay);
     } else {
       //sustaining
-      dampner = sustain;
+      dampner = note->sustain;
     }
-  } else if (release > 0) {
+  } else if (note->release > 0) {
     //releasing
-    dampner = sustain - note->pressed_time * (sustain / release);
+    dampner = note->sustain - note->pressed_time * (note->sustain / note->release);
   }
 
   amplitude = amplitude * dampner;

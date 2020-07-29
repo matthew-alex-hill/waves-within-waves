@@ -75,6 +75,10 @@ typedef struct midi_note {
   clock pressed_time;
   wave_output velocity;
   wave_output frequency;
+  wave_output attack;
+  wave_output decay;
+  wave_output sustain;
+  wave_output release;  
 } midi_note;
 
 /*the content of a wave value, which is one of

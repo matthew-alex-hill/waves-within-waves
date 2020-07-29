@@ -20,10 +20,10 @@ error_code getMainWave(Wave **out){
   frequencyWave->base.content.midi_value = FREQUENCY;
 
   frequencyWave->frequency.isValue = 1;
-  frequencyWave->frequency.content.value = 10;
+  frequencyWave->frequency.content.value = 2;
 
   frequencyWave->amplitude.isValue = 1;
-  frequencyWave->amplitude.content.nested_wave = amplitudeWave;
+  frequencyWave->amplitude.content.value = 0.5;
 
   frequencyWave->phase.isValue = 1;
   frequencyWave->phase.content.value = 0;
@@ -70,8 +70,8 @@ error_code getMainWave(Wave **out){
   mainWave->base.isValue = 1;
   mainWave->base.content.value = 0;
 
-  mainWave->frequency.isValue = 2;
-  mainWave->frequency.content.midi_value = FREQUENCY;
+  mainWave->frequency.isValue = 0;
+  mainWave->frequency.content.nested_wave = frequencyWave;
 
   mainWave->amplitude.isValue = 1;
   mainWave->amplitude.content.value = 1;
@@ -89,7 +89,7 @@ error_code getMainWave(Wave **out){
   mainWave->sustain.content.value = 0.4;
 
   mainWave->release.isValue = 1;
-  mainWave->release.content.value = 3;
+  mainWave->release.content.value = 1;
 
   
 
