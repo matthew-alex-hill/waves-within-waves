@@ -9,11 +9,14 @@
    time - the current time */
 static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) {
   if (waveValue->isValue == 1) {
+    //a constant value
     return waveValue->content.value;
   } else if (waveValue->isValue == 0) {
+    //a nested wave
     Wave *nested = (Wave *) waveValue->content.nested_wave;
     return sampleWave(nested, time, note);
   } else {
+    //a midi note's value
     if (waveValue->content.midi_value == FREQUENCY) {
       return (440 * pow(2, (note->frequency - 69)/12));
     }
@@ -62,7 +65,8 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
   if (amplitude <= 0) {
     return 0;
   }
-  
+
+  //returns a wave made by the decoded parameters
   return sampleStandardWave(wave->shape, base, frequency, amplitude, phase, time);
 }
 
@@ -116,7 +120,6 @@ wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output f
 
   //wave shape used to index the array
   wave_output out = makers[shape] (base, frequency, amplitude, phase, time);
-  //printf("%d\n", out);
   return out;
 }
 
@@ -140,6 +143,7 @@ char *getProgramError(error_code e) {
   return possible_errors[i].message;  
 }
 
+
 void freeWave(Wave* wave) {
   if (wave == NULL) {
     return;
@@ -159,6 +163,22 @@ void freeWave(Wave* wave) {
 
   if (!wave->phase.isValue) {
     freeWave(wave->phase.content.nested_wave);
+  }
+
+  if (!wave->attack.isValue) {
+    freeWave(wave->attack.content.nested_wave);
+  }
+
+  if (!wave->decay.isValue) {
+    freeWave(wave->decay.content.nested_wave);
+  }
+
+  if (!wave->sustain.isValue) {
+    freeWave(wave->sustain.content.nested_wave);
+  }
+
+  if (!wave->release.isValue) {
+    freeWave(wave->release.content.nested_wave);
   }
 
   free(wave);
