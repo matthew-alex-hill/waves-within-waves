@@ -1,0 +1,11 @@
+YYSTYPE yylval; //token value
+
+void print_token(FILE *out, int tok) {
+  switch (tok) {
+
+  }
+}
+
+int yywrap(void) {
+  return 1;
+}

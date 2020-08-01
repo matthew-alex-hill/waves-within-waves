@@ -1,0 +1,15 @@
+#ifndef WWW_LEX_SUPPORT
+#define WWW_LEX_SUPPORT
+
+/* Tokens */
+
+
+typedef union {
+
+} YYSTYPE;
+
+extern YYSTYPE yylval; //token value
+
+extern void print_token(FILE *out, int tok);
+
+#endif

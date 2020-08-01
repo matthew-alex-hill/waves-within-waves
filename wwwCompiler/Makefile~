@@ -1,0 +1,5 @@
+CC = gcc
+CFLAGS = -Wall
+LFLAGS = -o
+BUILD = lex_test.o
+OBJS = www_lexer.o lex_support.o
