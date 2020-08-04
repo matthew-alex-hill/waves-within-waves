@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
     printf("File %s could not be opened\n", argv[1]);
     return EXIT_FAILURE;
   }
-
-  yyout = fopen("test.c", "r");
+  //TODO: this needs to be synth_source.c when it is working
+  yyout = fopen("test.c", "w");
   if (!yyout) {
     printf("File test.c could not be opened\n");
     return EXIT_FAILURE;
@@ -46,9 +46,9 @@ int main(int argc, char **argv) {
 
   www_state state = START;
   char *wave_names[MAX_WAVES] = {NULL};
-  char *played_wave;
+  char *played_wave = NULL, **wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char *));
 
-  while( (tok=yylex()) != 0 )
+  while( (tok=yylex()) != 0 && state != ERROR)
     {
       printf( "token: " );
       print_token( stdout, tok );
@@ -56,13 +56,19 @@ int main(int argc, char **argv) {
       
       switch(state) {
       case START:
-        tok_from_start(&state, tok, yyout, wave_names);
+        tok_from_start(&state, tok, yyout, wave_names, wave_attribute);
         break;
       case SELECT:
         tok_from_select(&state, tok, yyout, wave_names, &played_wave);
         break;
-      default:
-        printf("on line %d", yylineno);
+      case ATTRIBUTE:
+        tok_from_attribute(&state, tok, yyout, wave_attribute);
+        break;
+      case MODIFY:
+        tok_from_modify(&state, tok, yyout, wave_names, wave_attribute);
+        break;
+      default: //ERROR
+        printf("on line %d\n", yylineno);
       }
     }
   fclose(yyin);

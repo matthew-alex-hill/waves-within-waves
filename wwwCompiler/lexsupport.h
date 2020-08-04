@@ -6,6 +6,9 @@
 /* maximum number of waves in one program */
 #define MAX_WAVES (10)
 
+/* maximum length of a wave name */
+#define MAX_NAME_LENGTH (30)
+
 /* Tokens */
 #define NUMBER (1)
 #define FLOAT (2)
@@ -33,15 +36,8 @@ typedef union {
 typedef enum compiler_state {
   START,            //nothing to know previously
   SELECT,           //selecting an outputted wave
-  ATTRIBUTE,        //adjusting an attribute
-  BASE_SELECT,      //adjusting base
-  FREQUENCY_SELECT, //adjusting frequency
-  AMPLITUDE_SELECT, //adjusting amplitude
-  PHASE_SELECT,     //adjusting phase
-  ATTACK_SELECT,    //adjusting attack
-  DECAY_SELECT,     //adjusting decay
-  SUSTAIN_SELECT,   //adjusting sustain
-  RELEASE_SELECT,   //adjusting release
+  ATTRIBUTE,        //a wave has been selected to modify and an attribute is being slected
+  MODIFY,           //modifying the data of a specific attribute
   ERROR,            //compile time error detected
 } www_state;
 
@@ -56,6 +52,6 @@ void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX
 
 void tok_from_attribute(www_state *state, int tok, FILE *out, char **wave_attribute);
 
-void tok_from_specific_attribute(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **wave_attribute);
+void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **wave_attribute);
 
 #endif

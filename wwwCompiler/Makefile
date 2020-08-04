@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -g -fsanitize=undefined
 LFLAGS = -l
-LDLIBS =
+LDLIBS = -lubsan
 BUILD = www_lexer
 OBJS = www_lexer.o lexsupport.o
 

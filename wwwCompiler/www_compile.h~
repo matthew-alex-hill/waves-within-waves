@@ -1,0 +1,6 @@
+#ifndef WWW_COMPILE
+#define WWW_COMPILE
+
+#include "../utils/wave_generation.h"
+
+#endif

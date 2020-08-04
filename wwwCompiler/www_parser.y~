@@ -1,0 +1,6 @@
+#include "lexsupport.h"
+#include "../utils/wave_generation.h"
+
+extern int yylex(void);
+extern int yylineno;
+

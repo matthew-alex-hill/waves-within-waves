@@ -75,6 +75,7 @@ static int search_for_wave(char *key, char *wave_names[MAX_WAVES]) {
   return 0;
 }
 
+/* creates a wave with name name in the array wave_names at the first available space */
 static int create_wave(char *name, char *wave_names[MAX_WAVES]) {
   for (int i = 0; i < MAX_WAVES; i++) {
     if (!wave_names[i]) {
@@ -90,9 +91,20 @@ void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_W
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
       *state = ATTRIBUTE; //attribute adjustment expected
-      fprintf(out, "%s", yylval.s); //starts line for an attribute adjustment 
+
+      //setting the wave attribute to the wave to be worked on
+
+      if (*wave_attribute) {
+	printf("%s\n", *wave_attribute);
+      }
+      free(*wave_attribute);
+      *wave_attribute = yylval.s;
     } else {
-      if (create_wave(yylval.s, wave_names)) {
+      if (strlen(yylval.s) > MAX_NAME_LENGTH) {
+	//wave name too long
+	printf("ERROR: wave name %s is above the name limit of %d characters ", yylval.s, MAX_NAME_LENGTH);
+	*state = ERROR;
+      } else if (create_wave(yylval.s, wave_names)) {
 	//state remains start as wave creation is successful
 	//creates a memory alloation for the wave
 	fprintf(out, "Wave *%s = (Wave *) malloc(sizeof(Wave));\n", yylval.s);
@@ -140,38 +152,31 @@ void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX
 }
 
 void tok_from_attribute(www_state *state, int tok, FILE *out, char **wave_attribute) {
+  *state = MODIFY;
   switch (tok) {
   case WAVE_BASE:
-    *state = BASE_SELECT;
-    fprintf(out, "->base.content");
+    strcat(*wave_attribute, "->base.content");
     break;
   case WAVE_FREQUENCY:
-    *state = FREQUENCY_SELECT;
-    fprintf(out, "->frequency.content");
+    strcat(*wave_attribute, "->frequency.content");
     break;
   case WAVE_AMPLITUDE:
-    *state = AMPLITUDE_SELECT;
-    fprintf(out, "->amplitude.content");
+    strcat(*wave_attribute, "->amplitude.content");
     break;
   case WAVE_PHASE:
-    *state = PHASE_SELECT;
-    fprintf(out, "->phase.content");
+    strcat(*wave_attribute, "->phase.content");
     break;
   case WAVE_ATTACK:
-    *state = ATTACK_SELECT;
-    fprintf(out, "->attack.content");
+    strcat(*wave_attribute, "->attack.content");
     break;
   case WAVE_DECAY:
-    *state = DECAY_SELECT;
-    fprintf(out, "->decay.content");
+    strcat(*wave_attribute, "->decay.content");
     break;
   case WAVE_SUSTAIN:
-    *state = SUSTAIN_SELECT;
-    fprintf(out, "->sustain.content");
+    strcat(*wave_attribute, "->sustain.content");
     break;
   case WAVE_RELEASE:
-    *state = RELEASE_SELECT;
-    fprintf(out, "->release.content");
+    strcat(*wave_attribute, "->release.content");
     break;
   default:
     //invalid syntax as an attribute is not mentioned
@@ -180,34 +185,34 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, char **wave_attrib
   }
 }
 
-void tok_from_specific_attribute(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **wave_attribute) {
+void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **wave_attribute) {
 
   switch (tok) {
   case NUMBER:
     *state = START;
-    fprintf(out, "%s.value = %d;\n", *wave_attribute, yylval.n);
     fprintf(out, "%s.isValue = 1;\n", *wave_attribute);
+    fprintf(out, "%s.value = %d;\n", *wave_attribute, yylval.n);
     break;
   case FLOAT:
     *state = START;
-    fprintf(out, "%s.value = %lf;\n", *wave_attribute, yylval.d);
     fprintf(out, "%s.isValue = 1;\n", *wave_attribute);
+    fprintf(out, "%s.value = %lf;\n", *wave_attribute, yylval.d);
     break;
   case MIDI_FREQUENCY:
     *state = START;
-    fprintf(out, "%s.midi_value = FREQUENCY;\n", *wave_attribute);
     fprintf(out, "%s.isValue = 2;\n", *wave_attribute);
+    fprintf(out, "%s.midi_value = FREQUENCY;\n", *wave_attribute);
     break;
   case MIDI_VELOCITY:
     *state = START;
-    fprintf(out, "%s.midi_value = VELOCITY;\n", *wave_attribute);
     fprintf(out, "%s.isValue = 2;\n", *wave_attribute);
+    fprintf(out, "%s.midi_value = VELOCITY;\n", *wave_attribute);
     break;
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
       *state = START;
-      fprintf(out, "%s.nested_wave = %s;\n", *wave_attribute, yylval.s);
       fprintf(out, "%s.isValue = 0;\n", *wave_attribute);
+      fprintf(out, "%s.nested_wave = %s;\n", *wave_attribute, yylval.s);
     } else {
       *state = ERROR;
       printf("ERROR: unknown wave %s ", yylval.s);
