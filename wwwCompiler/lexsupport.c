@@ -1,5 +1,6 @@
 #include "lexsupport.h"
 #include <string.h>
+#include <stdlib.h>
 
 YYSTYPE yylval; //token value
 
@@ -84,7 +85,7 @@ static int create_wave(char *name, char *wave_names[MAX_WAVES]) {
   return 0;
 }
 
-void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_WAVES]) {
+void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_WAVES], char **wave_attribute) {
   switch (tok) {
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
@@ -138,11 +139,83 @@ void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX
   }
 }
 
-void tok_from_attribute(www_state *state, int tok, FILE *out) {
-
+void tok_from_attribute(www_state *state, int tok, FILE *out, char **wave_attribute) {
+  switch (tok) {
+  case WAVE_BASE:
+    *state = BASE_SELECT;
+    fprintf(out, "->base.content");
+    break;
+  case WAVE_FREQUENCY:
+    *state = FREQUENCY_SELECT;
+    fprintf(out, "->frequency.content");
+    break;
+  case WAVE_AMPLITUDE:
+    *state = AMPLITUDE_SELECT;
+    fprintf(out, "->amplitude.content");
+    break;
+  case WAVE_PHASE:
+    *state = PHASE_SELECT;
+    fprintf(out, "->phase.content");
+    break;
+  case WAVE_ATTACK:
+    *state = ATTACK_SELECT;
+    fprintf(out, "->attack.content");
+    break;
+  case WAVE_DECAY:
+    *state = DECAY_SELECT;
+    fprintf(out, "->decay.content");
+    break;
+  case WAVE_SUSTAIN:
+    *state = SUSTAIN_SELECT;
+    fprintf(out, "->sustain.content");
+    break;
+  case WAVE_RELEASE:
+    *state = RELEASE_SELECT;
+    fprintf(out, "->release.content");
+    break;
+  default:
+    //invalid syntax as an attribute is not mentioned
+    *state = ERROR;
+    printf("ERROR: Invalid syntax ");
+  }
 }
 
-void tok_from_specific_attribute(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES]) {
+void tok_from_specific_attribute(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **wave_attribute) {
 
+  switch (tok) {
+  case NUMBER:
+    *state = START;
+    fprintf(out, "%s.value = %d;\n", *wave_attribute, yylval.n);
+    fprintf(out, "%s.isValue = 1;\n", *wave_attribute);
+    break;
+  case FLOAT:
+    *state = START;
+    fprintf(out, "%s.value = %lf;\n", *wave_attribute, yylval.d);
+    fprintf(out, "%s.isValue = 1;\n", *wave_attribute);
+    break;
+  case MIDI_FREQUENCY:
+    *state = START;
+    fprintf(out, "%s.midi_value = FREQUENCY;\n", *wave_attribute);
+    fprintf(out, "%s.isValue = 2;\n", *wave_attribute);
+    break;
+  case MIDI_VELOCITY:
+    *state = START;
+    fprintf(out, "%s.midi_value = VELOCITY;\n", *wave_attribute);
+    fprintf(out, "%s.isValue = 2;\n", *wave_attribute);
+    break;
+  case WAVE_IDENTIFIER:
+    if (search_for_wave(yylval.s, wave_names)) {
+      *state = START;
+      fprintf(out, "%s.nested_wave = %s;\n", *wave_attribute, yylval.s);
+      fprintf(out, "%s.isValue = 0;\n", *wave_attribute);
+    } else {
+      *state = ERROR;
+      printf("ERROR: unknown wave %s ", yylval.s);
+    }
+    break;
+  default:
+    *state = ERROR;
+    printf("ERROR: Invalid syntax ");
+  }
 }
 
