@@ -34,16 +34,39 @@ int main(int argc, char **argv) {
 
   yyin = fopen(argv[1], "r");
   if (!yyin) {
-    printf("File %s ould not be opened\n", argv[1]);
+    printf("File %s could not be opened\n", argv[1]);
+    return EXIT_FAILURE;
   }
-  
+
+  yyout = fopen("test.c", "r");
+  if (!yyout) {
+    printf("File test.c could not be opened\n");
+    return EXIT_FAILURE;
+  }
+
+  www_state state = START;
+  char *wave_names[MAX_WAVES] = {NULL};
+  char *played_wave;
+
   while( (tok=yylex()) != 0 )
     {
       printf( "token: " );
       print_token( stdout, tok );
       putchar( '\n' );
+      
+      switch(state) {
+      case START:
+        tok_from_start(&state, tok, yyout, wave_names);
+        break;
+      case SELECT:
+        tok_from_select(&state, tok, yyout, wave_names, &played_wave);
+        break;
+      default:
+        printf("on line %d", yylineno);
+      }
     }
   fclose(yyin);
+  fclose(yyout);
   yylex_destroy();
   
   return EXIT_SUCCESS;
