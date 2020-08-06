@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
   www_state state = START;
   char *wave_names[MAX_WAVES] = {NULL};
-  char *played_wave = NULL, **wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char *));
+  char *played_wave = NULL, *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
 
   while( (tok=yylex()) != 0 && state != ERROR)
     {

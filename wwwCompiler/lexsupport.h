@@ -46,12 +46,12 @@ extern FILE *yyin, *yyout;
 
 void print_token(FILE *out, int tok);
 
-void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_WAVES], char **wave_attribute);
+void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_WAVES], char *wave_attribute);
 
 void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **played_wave);
 
-void tok_from_attribute(www_state *state, int tok, FILE *out, char **wave_attribute);
+void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribute);
 
-void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **wave_attribute);
+void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *wave_attribute);
 
 #endif
