@@ -76,13 +76,24 @@ static int search_for_wave(char *key, char *wave_names[MAX_WAVES]) {
 }
 
 /* creates a wave with name name in the array wave_names at the first available space */
-static int create_wave(char *name, char *wave_names[MAX_WAVES]) {
+static int create_wave(char *name, char *wave_names[MAX_WAVES], FILE *out) {
+  if (strlen(name) > MAX_NAME_LENGTH) {
+    printf("ERROR: wave name %s is above the name limit of %d characters ", yylval.s, MAX_NAME_LENGTH);
+    return 0;
+  }
   for (int i = 0; i < MAX_WAVES; i++) {
     if (!wave_names[i]) {
+      //adds the wave name to the list of names
       wave_names[i] = name;
+
+      //writing the code to allocate space for the wave and check allocation succeeds
+      fprintf(out, "Wave *%s = (Wave *) malloc(sizeof(Wave));\n", name);
+      fprintf(out, "if (!%s) { *out = NULL; return ALLOCATION_FAIL; }\n", name);
       return 1;
     }
   }
+  //too many waves error
+  printf("ERROR: wave limit %d exceeded ", MAX_WAVES);
   return 0;
 }
 
@@ -93,22 +104,10 @@ void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_W
       *state = ATTRIBUTE; //attribute adjustment expected
 
       //setting the wave attribute to the wave to be worked on
-
       strcpy(wave_attribute, yylval.s);
     } else {
-      if (strlen(yylval.s) > MAX_NAME_LENGTH) {
-	//wave name too long
-	printf("ERROR: wave name %s is above the name limit of %d characters ", yylval.s, MAX_NAME_LENGTH);
-	*state = ERROR;
-      } else if (create_wave(yylval.s, wave_names)) {
-	//state remains start as wave creation is successful
-	//creates a memory alloation for the wave
-	//TODO: remove duplicated code
-	fprintf(out, "Wave *%s = (Wave *) malloc(sizeof(Wave));\n", yylval.s);
-	fprintf(out, "if (!%s) { *out = NULL; return ALLOCATION_FAIL; }\n", yylval.s);
-      } else {
-	//too many waves error
-	printf("ERROR: wave limit %d exceeded ", MAX_WAVES);
+      if (!create_wave(yylval.s, wave_names, out)) {
+	//wave creation auses an error
 	*state = ERROR;
       }
     }
@@ -128,17 +127,14 @@ void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX
   switch (tok) {
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
-      strcpy(played_wave, yylval.s);
+      //sets the globally played wave to the current one
+      strcpy(played_wave, yylval.s); 
       *state = START; //wave initialised and state reset
     } else {
-      if (create_wave(yylval.s, wave_names)) {
+      if (create_wave(yylval.s, wave_names, out)) {
 	strcpy(played_wave, yylval.s);
-	fprintf(out, "Wave *%s = (Wave *) malloc(sizeof(Wave));\n", yylval.s);
-	fprintf(out, "if (!%s) { *out = NULL; return ALLOCATION_FAIL; }\n", yylval.s);
 	*state = START; //state reset for next line
       } else {
-	//too many waves error
-	printf("ERROR: wave limit %d exceeded", MAX_WAVES);
 	*state = ERROR;
       }
     }

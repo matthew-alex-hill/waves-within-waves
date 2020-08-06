@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
     printf("File %s could not be opened\n", argv[1]);
     return EXIT_FAILURE;
   }
-  //TODO: this needs to be synth_source.c when it is working
-  yyout = fopen("test.c", "w");
+
+  yyout = fopen("../utils/synth_source.c", "w");
   if (!yyout) {
     printf("File test.c could not be opened\n");
     return EXIT_FAILURE;
@@ -51,11 +51,10 @@ int main(int argc, char **argv) {
   char *wave_names[MAX_WAVES] = {NULL};
   char *played_wave = calloc(MAX_NAME_LENGTH, sizeof(char));
   char *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
-  int escape = 0;
 
   fprintf(yyout, "error_code getMainWave(Wave **out) {\n");
 
-  while( (tok=yylex()) != 0 && !escape)
+  while( (tok=yylex()) != 0 && state != ERROR)
     {
       //printf( "token: " );
       //print_token( stdout, tok );
@@ -77,11 +76,15 @@ int main(int argc, char **argv) {
       case SHAPE:
         tok_from_shape(&state, tok, yyout, wave_attribute);
         break;
-      default: //ERROR
-        printf("on line %d\n", yylineno);
-        escape = 1;
+      case ERROR:
+        break;
       }
     }
+
+  if (state == ERROR) {
+    printf("on line %d\n", yylineno);
+  }
+
   fprintf(yyout, "*out = %s;\nreturn OK;\n}\n", played_wave);  
   fclose(yyin);
   fclose(yyout);
