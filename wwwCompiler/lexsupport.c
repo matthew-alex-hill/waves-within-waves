@@ -108,7 +108,7 @@ void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_W
 	fprintf(out, "if (!%s) { *out = NULL; return ALLOCATION_FAIL; }\n", yylval.s);
       } else {
 	//too many waves error
-	printf("ERROR: wave limit %d exceeded", MAX_WAVES);
+	printf("ERROR: wave limit %d exceeded ", MAX_WAVES);
 	*state = ERROR;
       }
     }
@@ -119,7 +119,7 @@ void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_W
     break;
   default:
     //invalid token
-    printf("ERROR: Invalid syntax");
+    printf("ERROR: invalid opening of statement ");
     *state = ERROR;
   }
 }
@@ -146,7 +146,7 @@ void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX
   default:
     //invalid token
     *state = ERROR;
-    printf("ERROR: Invalid syntax");
+    printf("ERROR: wave identifier expected after 'play' ");
   }
 }
 
@@ -183,7 +183,7 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribu
   default:
     //invalid syntax as an attribute is not mentioned
     *state = ERROR;
-    printf("ERROR: Invalid syntax ");
+    printf("ERROR: attribute expected ");
   }
 }
 
@@ -239,7 +239,7 @@ void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX
     break;
   default:
     *state = ERROR;
-    printf("ERROR: Invalid syntax ");
+    printf("ERROR: illegal wave attribute value ");
   }
 }
 
