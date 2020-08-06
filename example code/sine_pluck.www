@@ -1,0 +1,11 @@
+play mainWave
+
+mainWave.shape = SINE
+mainWave.base = 0
+mainWave.amplitude = in.velocity
+mainWave.frequency = in.frequency
+mainWave.phase = 0
+mainWave.attack = 0.1
+mainWave.decay = 2
+mainWave.sustain = 0
+mainWave.release = 0
