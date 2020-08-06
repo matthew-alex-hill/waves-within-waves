@@ -153,28 +153,28 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribu
     *state = SHAPE;
     break;
   case WAVE_BASE:
-    strcat(wave_attribute, "->base.content");
+    strcat(wave_attribute, "->base");
     break;
   case WAVE_FREQUENCY:
-    strcat(wave_attribute, "->frequency.content");
+    strcat(wave_attribute, "->frequency");
     break;
   case WAVE_AMPLITUDE:
-    strcat(wave_attribute, "->amplitude.content");
+    strcat(wave_attribute, "->amplitude");
     break;
   case WAVE_PHASE:
-    strcat(wave_attribute, "->phase.content");
+    strcat(wave_attribute, "->phase");
     break;
   case WAVE_ATTACK:
-    strcat(wave_attribute, "->attack.content");
+    strcat(wave_attribute, "->attack");
     break;
   case WAVE_DECAY:
-    strcat(wave_attribute, "->decay.content");
+    strcat(wave_attribute, "->decay");
     break;
   case WAVE_SUSTAIN:
-    strcat(wave_attribute, "->sustain.content");
+    strcat(wave_attribute, "->sustain");
     break;
   case WAVE_RELEASE:
-    strcat(wave_attribute, "->release.content");
+    strcat(wave_attribute, "->release");
     break;
   default:
     //invalid syntax as an attribute is not mentioned
@@ -206,28 +206,28 @@ void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX
   case NUMBER:
     *state = START;
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
-    fprintf(out, "%s.value = %d;\n", wave_attribute, yylval.n);
+    fprintf(out, "%s.content.value = %d;\n", wave_attribute, yylval.n);
     break;
   case FLOAT:
     *state = START;
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
-    fprintf(out, "%s.value = %lf;\n", wave_attribute, yylval.d);
+    fprintf(out, "%s.content.value = %lf;\n", wave_attribute, yylval.d);
     break;
   case MIDI_FREQUENCY:
     *state = START;
     fprintf(out, "%s.isValue = 2;\n", wave_attribute);
-    fprintf(out, "%s.midi_value = FREQUENCY;\n", wave_attribute);
+    fprintf(out, "%s.content.midi_value = FREQUENCY;\n", wave_attribute);
     break;
   case MIDI_VELOCITY:
     *state = START;
     fprintf(out, "%s.isValue = 2;\n", wave_attribute);
-    fprintf(out, "%s.midi_value = VELOCITY;\n", wave_attribute);
+    fprintf(out, "%s.content.midi_value = VELOCITY;\n", wave_attribute);
     break;
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
       *state = START;
       fprintf(out, "%s.isValue = 0;\n", wave_attribute);
-      fprintf(out, "%s.nested_wave = %s;\n", wave_attribute, yylval.s);
+      fprintf(out, "%s.content.nested_wave = %s;\n", wave_attribute, yylval.s);
     } else {
       *state = ERROR;
       printf("ERROR: unknown wave %s ", yylval.s);

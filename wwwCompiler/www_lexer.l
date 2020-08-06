@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
   char *played_wave = calloc(MAX_NAME_LENGTH, sizeof(char));
   char *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
 
+  fprintf(yyout, "#include \"synth_source.h\"\n");
   fprintf(yyout, "error_code getMainWave(Wave **out) {\n");
 
   while( (tok=yylex()) != 0 && state != ERROR)
