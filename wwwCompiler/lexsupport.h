@@ -9,6 +9,10 @@
 /* maximum length of a wave name */
 #define MAX_NAME_LENGTH (30)
 
+/* determines if a SHAPE_IDENTIFIER token contains a valid shape identifier */
+#define IS_VALID_SHAPE(s) \
+  (!strcmp(s,"SAW") || !strcmp(s,"SINE") || !strcmp(s,"SQUARE") || !strcmp(s,"TRIANGLE") || !strcmp(s,"EMPTY"))
+
 /* Tokens */
 #define NUMBER (1)
 #define FLOAT (2)
@@ -23,7 +27,9 @@
 #define WAVE_DECAY (11)
 #define WAVE_SUSTAIN (12)
 #define WAVE_RELEASE (13)
-#define OUTPUT_WAVE (14)
+#define WAVE_SHAPE (14)
+#define SHAPE_IDENTIFIER (15)
+#define OUTPUT_WAVE (16)
 #define INVALID (-1)
 
 typedef union {
@@ -37,6 +43,7 @@ typedef enum compiler_state {
   START,            //nothing to know previously
   SELECT,           //selecting an outputted wave
   ATTRIBUTE,        //a wave has been selected to modify and an attribute is being slected
+  SHAPE,            //selecting the shape of a wave
   MODIFY,           //modifying the data of a specific attribute
   ERROR,            //compile time error detected
 } www_state;
@@ -48,9 +55,11 @@ void print_token(FILE *out, int tok);
 
 void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_WAVES], char *wave_attribute);
 
-void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **played_wave);
+void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *played_wave);
 
 void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribute);
+
+void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute);
 
 void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *wave_attribute);
 

@@ -122,6 +122,5 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note);
    ASSUMES ALL WAVE VALUES HAVE isValue TRUE
 */
 wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time);
-
 void freeWave(Wave *wave);
 #endif

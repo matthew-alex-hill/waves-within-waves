@@ -103,7 +103,9 @@ void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_W
       } else if (create_wave(yylval.s, wave_names)) {
 	//state remains start as wave creation is successful
 	//creates a memory alloation for the wave
+	//TODO: remove duplicated code
 	fprintf(out, "Wave *%s = (Wave *) malloc(sizeof(Wave));\n", yylval.s);
+	fprintf(out, "if (!%s) { *out = NULL; return ALLOCATION_FAIL; }\n", yylval.s);
       } else {
 	//too many waves error
 	printf("ERROR: wave limit %d exceeded", MAX_WAVES);
@@ -122,16 +124,17 @@ void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_W
   }
 }
 
-void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char **played_wave) {
+void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *played_wave) {
   switch (tok) {
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
-      *played_wave = yylval.s;
+      strcpy(played_wave, yylval.s);
       *state = START; //wave initialised and state reset
     } else {
       if (create_wave(yylval.s, wave_names)) {
-	*played_wave = yylval.s;
+	strcpy(played_wave, yylval.s);
 	fprintf(out, "Wave *%s = (Wave *) malloc(sizeof(Wave));\n", yylval.s);
+	fprintf(out, "if (!%s) { *out = NULL; return ALLOCATION_FAIL; }\n", yylval.s);
 	*state = START; //state reset for next line
       } else {
 	//too many waves error
@@ -150,6 +153,9 @@ void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX
 void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribute) {
   *state = MODIFY;
   switch (tok) {
+  case WAVE_SHAPE:
+    *state = SHAPE;
+    break;
   case WAVE_BASE:
     strcat(wave_attribute, "->base.content");
     break;
@@ -179,7 +185,23 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribu
     *state = ERROR;
     printf("ERROR: Invalid syntax ");
   }
-  printf("%s\n", wave_attribute);
+}
+
+void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) {
+  switch (tok) {
+  case SHAPE_IDENTIFIER:
+    if (IS_VALID_SHAPE(yylval.s)) {
+      fprintf(out, "%s->shape = %s;\n", wave_attribute, yylval.s);
+      *state = START;
+    } else {
+      printf("Invalid shape %s ", yylval.s);
+      *state = ERROR;
+    }
+    break;
+  default:
+    *state = ERROR;
+    printf("ERROR: expected shape identifier ");
+  }
 }
 
 void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *wave_attribute) {

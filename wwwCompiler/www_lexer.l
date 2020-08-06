@@ -14,13 +14,16 @@
 \.decay[ \t]*=     return WAVE_DECAY;
 \.sustain[ \t]*=   return WAVE_SUSTAIN;
 \.release[ \t]*=   return WAVE_RELEASE;
+\.shape[ \t]*=     return WAVE_SHAPE;
 in\.frequency      return MIDI_FREQUENCY;
 in\.velocity       return MIDI_VELOCITY;
 play               return OUTPUT_WAVE;
 [0-9]+             yylval.n=atoi(yytext); return NUMBER;
 [0.9]+\.[0-9]+     yylval.d=atof(yytext); return FLOAT;
 [a-z][a-zA-Z0-9]*  yylval.s=strdup(yytext); return WAVE_IDENTIFIER;
+[A-Z]*             yylval.s=strdup(yytext); return SHAPE_IDENTIFIER;
 [ \t\n]+           /* whitespace ignored */
+\/\/(.*)           /* single line comment */
 .                  return INVALID;
 %%
 
@@ -46,20 +49,24 @@ int main(int argc, char **argv) {
 
   www_state state = START;
   char *wave_names[MAX_WAVES] = {NULL};
-  char *played_wave = NULL, *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
+  char *played_wave = calloc(MAX_NAME_LENGTH, sizeof(char));
+  char *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
+  int escape = 0;
 
-  while( (tok=yylex()) != 0 && state != ERROR)
+  fprintf(yyout, "error_code getMainWave(Wave **out) {\n");
+
+  while( (tok=yylex()) != 0 && !escape)
     {
-      printf( "token: " );
-      print_token( stdout, tok );
-      putchar( '\n' );
+      //printf( "token: " );
+      //print_token( stdout, tok );
+      //putchar( '\n' );
       
       switch(state) {
       case START:
         tok_from_start(&state, tok, yyout, wave_names, wave_attribute);
         break;
       case SELECT:
-        tok_from_select(&state, tok, yyout, wave_names, &played_wave);
+        tok_from_select(&state, tok, yyout, wave_names, played_wave);
         break;
       case ATTRIBUTE:
         tok_from_attribute(&state, tok, yyout, wave_attribute);
@@ -67,10 +74,15 @@ int main(int argc, char **argv) {
       case MODIFY:
         tok_from_modify(&state, tok, yyout, wave_names, wave_attribute);
         break;
+      case SHAPE:
+        tok_from_shape(&state, tok, yyout, wave_attribute);
+        break;
       default: //ERROR
         printf("on line %d\n", yylineno);
+        escape = 1;
       }
     }
+  fprintf(yyout, "*out = %s;\nreturn OK;\n}\n", played_wave);  
   fclose(yyin);
   fclose(yyout);
   yylex_destroy();

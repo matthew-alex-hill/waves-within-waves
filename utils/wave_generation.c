@@ -143,7 +143,6 @@ char *getProgramError(error_code e) {
   return possible_errors[i].message;  
 }
 
-
 void freeWave(Wave* wave) {
   if (wave == NULL) {
     return;
