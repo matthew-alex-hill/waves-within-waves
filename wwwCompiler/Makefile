@@ -3,20 +3,20 @@ CFLAGS = -Wall -g -fsanitize=undefined
 LFLAGS = -l
 LDLIBS = -lubsan
 BUILD = www_lexer
-OBJS = www_lexer.o lexsupport.o
+OBJS = www_compiler.o lexsupport.o
 
 all: $(BUILD)
 
 clean:
-	/bin/rm -f $(BUILD) *.o www_lexer.c core
+	/bin/rm -f $(BUILD) *.o www_compiler.c core
+	cd ../; /bin/rm -f wwwc core
 
 www_lexer: $(OBJS)
-	$(CC) -o www_lexer $(OBJS) $(LDLIBS)
+	$(CC) -o ../wwwc $(OBJS) $(LDLIBS)
 
-www_lexer.o: lexsupport.h
+www_compiler.o: lexsupport.h
 lexsupport.o: lexsupport.h
-www_lexer.o: lexsupport.h
 
-www_lexer.c: www_lexer.l
-	lex $(LFLAGS) -o www_lexer.c www_lexer.l
+www_lexer.c: www_compiler.l
+	lex $(LFLAGS) -o www_compiler.c www_compiler.l
 
