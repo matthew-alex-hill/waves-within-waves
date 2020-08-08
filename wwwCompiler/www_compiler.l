@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   }
 
   www_state state = START;
-  char *wave_names[MAX_WAVES] = {NULL};
+  wave_info *wave_names[MAX_WAVES] = {NULL};
   char *played_wave = calloc(MAX_NAME_LENGTH, sizeof(char));
   char *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         tok_from_select(&state, tok, yyout, wave_names, played_wave);
         break;
       case ATTRIBUTE:
-        tok_from_attribute(&state, tok, yyout, wave_attribute);
+        tok_from_attribute(&state, tok, yyout, wave_names, wave_attribute);
         break;
       case MODIFY:
         tok_from_modify(&state, tok, yyout, wave_names, wave_attribute);
@@ -83,6 +83,15 @@ int main(int argc, char **argv) {
   if (state == ERROR) {
     printf("on line %d\n", yylineno);
   }
+
+for (int i = 0; i < MAX_WAVES; i++) {
+  if (wave_names[i]) {
+    if (!wave_names[i]->base) printf("no base\n");
+    if (!wave_names[i]->frequency) printf("no frequency\n");
+    if (!wave_names[i]->amplitude) printf("no amplitude\n");
+    //this is just tester ode so I wont do all the attributes
+  }
+}
 
   fprintf(yyout, "*out = %s;\nreturn OK;\n}\n", played_wave);  
   fclose(yyin);

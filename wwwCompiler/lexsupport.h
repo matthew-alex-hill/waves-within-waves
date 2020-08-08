@@ -32,6 +32,7 @@
 #define OUTPUT_WAVE (16)
 #define INVALID (-1)
 
+/* data type that ccan be stored by tokens */
 typedef union {
   int n;
   double d;
@@ -48,19 +49,34 @@ typedef enum compiler_state {
   ERROR,            //compile time error detected
 } www_state;
 
+/* struct that acts as a checklist for which attributes have been modified
+   wave_name - the name of the wave
+   others - 1 if that attribute is modified, 0 if a default value is needed */
+typedef struct compiler_wave_info {
+  char *wave_name;
+  int base;
+  int frequency;
+  int amplitude;
+  int phase;
+  int attack;
+  int decay;
+  int sustain;
+  int release;
+} wave_info;
+
 extern YYSTYPE yylval; //token value
 extern FILE *yyin, *yyout;
 
 void print_token(FILE *out, int tok);
 
-void tok_from_start(www_state *state, int tok, FILE *out, char *wave_names[MAX_WAVES], char *wave_attribute);
+void tok_from_start(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
-void tok_from_select(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *played_wave);
+void tok_from_select(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *played_wave);
 
-void tok_from_attribute(www_state *state, int tok, FILE *out, char *wave_attribute);
+void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
 void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute);
 
-void tok_from_modify(www_state *state, int tok, FILE *out,  char *wave_names[MAX_WAVES], char *wave_attribute);
+void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
 #endif
