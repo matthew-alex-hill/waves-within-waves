@@ -84,14 +84,11 @@ int main(int argc, char **argv) {
     printf("on line %d\n", yylineno);
   }
 
-for (int i = 0; i < MAX_WAVES; i++) {
-  if (wave_names[i]) {
-    if (!wave_names[i]->base) printf("no base\n");
-    if (!wave_names[i]->frequency) printf("no frequency\n");
-    if (!wave_names[i]->amplitude) printf("no amplitude\n");
-    //this is just tester ode so I wont do all the attributes
+  fprintf(yyout, "/* default values */\n");
+
+  for (int i = 0; i < MAX_WAVES; i++) {
+    write_defaults(wave_names[i], yyout);
   }
-}
 
   fprintf(yyout, "*out = %s;\nreturn OK;\n}\n", played_wave);  
   fclose(yyin);

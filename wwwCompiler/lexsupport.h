@@ -32,6 +32,17 @@
 #define OUTPUT_WAVE (16)
 #define INVALID (-1)
 
+
+/* default values if nothing entered for a value */
+#define BASE_DEFAULT (0)
+#define FREQUENCY_DEFAULT (0)
+#define AMPLITUDE_DEFAULT (1)
+#define PHASE_DEFAULT (0)
+#define ATTACK_DEFAULT (0)
+#define DECAY_DEFAULT (0)
+#define SUSTAIN_DEFAULT (1)
+#define RELEASE_DEFAULT (0)
+
 /* data type that ccan be stored by tokens */
 typedef union {
   int n;
@@ -79,4 +90,5 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute);
 
 void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
+void write_defaults(wave_info *wave, FILE *out);
 #endif

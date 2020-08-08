@@ -253,3 +253,32 @@ void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names
   }
 }
 
+void write_defaults(wave_info *wave, FILE *out) {
+  if (!wave) {
+    return;
+  }
+  if (!wave->base) {
+    fprintf(out, "%s->base.isValue = 1;\n%s->base.content.value = %d;\n", wave->wave_name, wave->wave_name, BASE_DEFAULT);
+  }
+  if (!wave->frequency) {
+    fprintf(out, "%s->frequency.isValue = 1;\n%s->frequency.content.value = %d;\n", wave->wave_name, wave->wave_name, FREQUENCY_DEFAULT);
+  }
+  if (!wave->amplitude) {
+    fprintf(out, "%s->amplitude.isValue = 1;\n%s->amplitude.content.value = %d;\n", wave->wave_name, wave->wave_name, AMPLITUDE_DEFAULT);
+  }
+  if (!wave->phase) {
+    fprintf(out, "%s->phase.isValue = 1;\n%s->phase.content.value = %d;\n", wave->wave_name, wave->wave_name, PHASE_DEFAULT);
+  }
+  if (!wave->attack) {
+    fprintf(out, "%s->attack.isValue = 1;\n%s->attack.content.value = %d;\n", wave->wave_name, wave->wave_name, ATTACK_DEFAULT);
+  }
+  if (!wave->decay) {
+    fprintf(out, "%s->decay.isValue = 1;\n%s->decay.content.value = %d;\n", wave->wave_name, wave->wave_name, DECAY_DEFAULT);
+  }
+  if (!wave->sustain) {
+    fprintf(out, "%s->sustain.isValue = 1;\n%s->sustain.content.value = %d;\n", wave->wave_name, wave->wave_name, SUSTAIN_DEFAULT);
+  }
+  if (!wave->release) {
+    fprintf(out, "%s->release.isValue = 1;\n%s->release.content.value = %d;\n", wave->wave_name, wave->wave_name, RELEASE_DEFAULT);
+  }
+}
