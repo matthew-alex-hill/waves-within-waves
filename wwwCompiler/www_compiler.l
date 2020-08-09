@@ -49,7 +49,11 @@ int main(int argc, char **argv) {
 
   www_state state = START;
   wave_info *wave_names[MAX_WAVES] = {NULL};
+
+  //tracks the currently outputted waveform
   char *played_wave = calloc(MAX_NAME_LENGTH, sizeof(char));
+
+  //tracks the current line opening for attribute modification lines eg wave->frequency
   char *wave_attribute = calloc(MAX_NAME_LENGTH + 20, sizeof(char));
 
 
@@ -90,7 +94,7 @@ int main(int argc, char **argv) {
     write_defaults(wave_names[i], yyout);
   }
 
-  fprintf(yyout, "*out = %s;\nreturn OK;\n}\n", played_wave);  
+  fprintf(yyout, "*out = %s;\nreturn OK;\n}", played_wave);  
   fclose(yyin);
   fclose(yyout);
   yylex_destroy();
