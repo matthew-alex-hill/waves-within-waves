@@ -78,17 +78,76 @@ typedef struct compiler_wave_info {
 extern YYSTYPE yylval; //token value
 extern FILE *yyin, *yyout;
 
+/* function called by lex to generate a textual output of a token 
+   out - the print stream to write to
+   tok - an integer corresponding to a token to decode */
 void print_token(FILE *out, int tok);
 
+/* uses a token to advance the compiler state when in state START
+   also writes memory allocation and checking lines to the out file 
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_names - a list of waves currently in existence to see if a wave name is duplicated
+   wave_attribute - a pointer to the global string that shows the current line opening */
 void tok_from_start(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
+
+/* uses a token to advance the compiler state when in state SELECT 
+   also can write memory allocation and checking lines if a new wave is given
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_names - a list of waves currently in existence to see if a wave is being created or if an existing wave is being set as the output
+   played_wave - a pointer to the global string that shows the currently outputted wave */
 void tok_from_select(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *played_wave);
 
+/* uses a token to advance the compiler state when in state ATTRIBUTE 
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_names - a list of waves used to set attribute modification bools
+   wave_attribute - a pointer to the global string that shows the current line opening */
 void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
+/* uses a token to advance the compiler state when in state SHAPE
+   also writes shape attribute modifications lines 
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_attribute - a pointer to the global string that shows the current line opening */
 void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute);
 
+/* uses a token to advance the compiler state when in state MODIFY 
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_names - a list of waves currently in existence to check wave identifier values point to real waves
+   wave_attribute - a pointer to the global string that shows the current line opening */
 void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
 
+/* checks a wave info struct's attribute modifiation bools for unmodified attributes and sets them to a default value
+   wave - the wave_info struct to be checked
+   out - the file to write the default value code into */
 void write_defaults(wave_info *wave, FILE *out);
 #endif
+
+/* COMPILER STATE LOGIC (if not an expected token then the next state is ERROR)
+   START - WAVE_IDENTIFIER or OUTPUT_SELECT expected
+           WAVE_IDENTIFIER -> START/ATTRIBUTE (START if new, ATTRIBUTE if existing)
+           OUTPUT_SELECT -> SELECT
+
+   SELECT - WAVE_IDENTIFIER expected
+            WAVE_IDENTIFIER -> START
+
+   ATTRIBUTE - WAVE_SHAPE or WAVE_BASE or WAVE_FREQUENCY or WAVE_AMPLITUDE or WAVE_PHASE or WAVE_ATTACK or WAVE_DECAY or WAVE_SUSTAIN or WAVE_RELEASE expected
+               WAVE_SHAPE -> SHAPE
+	       OTHERS -> MODIFY
+
+   SHAPE - SHAPE_IDENTIFIER expected
+           SHAPE_IDENTIFIER -> START
+
+   MODIFY - NUMBER or FLOAT or MIDI_FREQUENCY or MIDI_VELOCITY or WAVE_IDENTIFIER expected
+            ALL -> START
+	    UNLESS WAVE_IDENTIFIER for non existent wave, which leads to ERROR
+ */

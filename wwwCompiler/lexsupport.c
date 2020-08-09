@@ -75,7 +75,12 @@ static int search_for_wave(char *key, wave_info *wave_names[MAX_WAVES]) {
   return -1;
 }
 
-/* creates a wave with name name in the array wave_names at the first available space */
+/* creates a wave with name name and attribute modification bools as 0 in the array wave_names at the first available space
+   also writes the memory allocation and checking code
+   returns 1 if the wave is successfully added , 0 otherwise 
+   name - the name of the wave to be created
+   wave_names - the list of waves to try and add it to
+   out - the file to write memory allocation code to */
 static int create_wave(char *name, wave_info *wave_names[MAX_WAVES], FILE *out) {
   if (strlen(name) > MAX_NAME_LENGTH) {
     printf("ERROR: wave name %s is above the name limit of %d characters ", yylval.s, MAX_NAME_LENGTH);
@@ -215,31 +220,26 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) 
 }
 
 void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute) {
-
+  *state = START;
   switch (tok) {
   case NUMBER:
-    *state = START;
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
     fprintf(out, "%s.content.value = %d;\n", wave_attribute, yylval.n);
     break;
   case FLOAT:
-    *state = START;
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
     fprintf(out, "%s.content.value = %lf;\n", wave_attribute, yylval.d);
     break;
   case MIDI_FREQUENCY:
-    *state = START;
     fprintf(out, "%s.isValue = 2;\n", wave_attribute);
     fprintf(out, "%s.content.midi_value = FREQUENCY;\n", wave_attribute);
     break;
   case MIDI_VELOCITY:
-    *state = START;
     fprintf(out, "%s.isValue = 2;\n", wave_attribute);
     fprintf(out, "%s.content.midi_value = VELOCITY;\n", wave_attribute);
     break;
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
-      *state = START;
       fprintf(out, "%s.isValue = 0;\n", wave_attribute);
       fprintf(out, "%s.content.nested_wave = %s;\n", wave_attribute, yylval.s);
     } else {
