@@ -36,7 +36,7 @@ typedef struct err {
   err - the error code given by the program */
 char *getProgramError(error_code err);
 
-/* WAVE GENERATION FUNCTIONS */
+/* WAVE GENERATION FUNCTIONS AND DATA TYPES */
 
 //the type returned when taking a point from a wave
 //currently a double for increased precision as calculations were getting inaccurate 
@@ -45,9 +45,14 @@ typedef double wave_output;
 //the type of the time values
 typedef float clock;
 
+//function template for all wave form sampling functions
 typedef wave_output (*default_wave_maker) (wave_output, wave_output,
 					   wave_output, wave_output,
 					   clock);
+
+//function template for functions that combine two waves into one output
+typedef wave_output (*wave_combiner) (wave_output, wave_output);
+
 //defines the shape of a wave, empty is a flat line on 0
 typedef enum wave_shape_enum {
   SAW,
@@ -57,19 +62,28 @@ typedef enum wave_shape_enum {
   EMPTY
 } wave_shape;
 
+//determines whether a note has been pressed or released so ADSR can be applied to it
 typedef enum midi_note_state {
   HELD,
   RELEASED
 } note_status;
 
+//Data stored by a midi note which can be used in wave generation 
 typedef enum midi_note_value {
   FREQUENCY,
   VELOCITY
 } note_value;
 
 /* the values stored in a MIDI note 
+   pressed - whether the note is held down or not
+   pressed_time - time since note was pressed / released
    velocity - amplitude of note
-   frequency - frequency of note */
+   frequency - frequency of note 
+   attack - the attack value used by the note
+   decay - the decay value used by the note
+   sustain - the sustain value used by the note
+   release - the release value used by the note
+*/
 typedef struct midi_note {
   note_status pressed;
   clock pressed_time;
@@ -84,18 +98,30 @@ typedef struct midi_note {
 /*the content of a wave value, which is one of
   a constant value
   a pointer to another wave structure
+  an enum indicating a midi value
  */
 typedef union wave_content_union {
   wave_output value;
   void *nested_wave; //should always be a pointer to a wave
   note_value midi_value; //points to a value in a midi_note struct
+  void *combined;
 } wave_content;
 
 //contains the wave content and a boolean stating what kind of content it has
 typedef struct wave_value_struct {
-  int isValue; // 0 = value, 1 = nested wave, 2 = midi value
+  int isValue; // 0 = value, 1 = nested wave, 2 = midi value, 3 = combined wave
   wave_content content;
 } wave_value;
+
+/* a combiner for 2 wave values
+   value1 & value2 are the values to be combined
+   combiner is the function pointer to the combining function
+*/
+typedef struct combined_wave {
+  wave_value *value1;
+  wave_value *value2;
+  wave_combiner combiner;
+} combined_wave;
 
 //contains the wave shape and a wave value for each attribute of the wave
 typedef struct wave_struct {
@@ -105,22 +131,32 @@ typedef struct wave_struct {
   wave_value amplitude; //maximum displacement from base
   wave_value phase;     //how far along the wave begins
 
-  wave_value attack;
-  wave_value decay;
-  wave_value sustain;
-  wave_value release;
+  wave_value attack;    //length of time for volume to raise to maximum
+  wave_value decay;     //length of time for volume to decrease to sustain level
+  wave_value sustain;   //sustained volume level from 0 to 1
+  wave_value release;   //length of time to decay from sustain to 0
 } Wave;
 
 /* get an output value from a wave at a given time
    wave - pointer to the wave struct
    time - the time to sample at
+   note - the note that is being sampled
 */
 wave_output sampleWave(Wave *wave, clock time, midi_note *note);
 
-/* sample a generic wave shape given a wave with all constant parameters
-   wave - the wave to be sampled
-   ASSUMES ALL WAVE VALUES HAVE isValue TRUE
+/* sample a generic wave shape given a list of the wave parameters as values
+   All arguments are the same as the attributes in the Wave struct and will be the result of sampleWave's calculations
 */
 wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time);
+
+/* frees a wave and all nested waves within it
+   wave - the wave to be freed
+*/
 void freeWave(Wave *wave);
+
+/* wave combiner functions */
+wave_output add_waves(wave_output value1, wave_output value2);
+wave_output sub_waves(wave_output value1, wave_output value2);
+wave_output mul_waves(wave_output value1, wave_output value2);
+wave_output div_waves(wave_output value1, wave_output value2);
 #endif

@@ -8,19 +8,29 @@
    waveValue - the wave_value struct of the parameter eg. frequency
    time - the current time */
 static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) {
-  if (waveValue->isValue == 1) {
+  Wave *nested;
+  combined_wave *combined;
+  switch (waveValue->isValue) {
+  case 1:
     //a constant value
     return waveValue->content.value;
-  } else if (waveValue->isValue == 0) {
+  case 0:
     //a nested wave
-    Wave *nested = (Wave *) waveValue->content.nested_wave;
+    nested = (Wave *) waveValue->content.nested_wave;
     return sampleWave(nested, time, note);
-  } else {
+  case 2:
     //a midi note's value
     if (waveValue->content.midi_value == FREQUENCY) {
       return (440 * pow(2, (note->frequency - 69)/12));
     }
     return note->velocity / 128;
+  case 3:
+    //a combined wave
+    combined = (combined_wave *) waveValue->content.combined;
+    return combined->combiner(getValue(combined->value1, time, note),
+			      getValue(combined->value2, time, note));
+  default:
+    return 0;
   }
 }
 
@@ -181,4 +191,20 @@ void freeWave(Wave* wave) {
   }
 
   free(wave);
+}
+
+wave_output add_waves(wave_output value1, wave_output value2) {
+  return value1 + value2;
+}
+
+wave_output sub_waves(wave_output value1, wave_output value2) {
+  return value1 - value2;
+}
+
+wave_output mul_waves(wave_output value1, wave_output value2) {
+  return value1 * value2;
+}
+
+wave_output div_waves(wave_output value1, wave_output value2) {
+  return value1 / value2;
 }
