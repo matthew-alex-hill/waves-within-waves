@@ -1,0 +1,16 @@
+play mainWave
+sineWave
+squareWave
+
+mainWave.shape = EMPTY
+mainWave.base = SUM sineWave squareWave
+
+sineWave.shape = SINE
+sineWave.frequency = in.frequency
+sineWave.amplitude = 0.5
+sineWave.attack = 0.3
+
+squareWave.shape = SQUARE
+squareWave.frequency = in.frequency
+squareWave.amplitude = 0.5
+squareWave.attack = 0.3

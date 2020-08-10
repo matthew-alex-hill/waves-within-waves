@@ -129,7 +129,15 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute);
    out - the file to write lines of code to
    wave_names - a list of waves currently in existence to check wave identifier values point to real waves
    wave_attribute - a pointer to the global string that shows the current line opening */
-void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute);
+void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute, int *combinerno);
+
+/* uses a token to advance the compiler state when in state MODIFY_COMBINER 
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_names - a list of waves currently in existence to check wave identifier values point to real waves
+   combinerno - a pointer to the combinerno counter which tracks the number of the combiner and the value item that is being written to */
+void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], int *combinerno);
 
 /* checks a wave info struct's attribute modifiation bools for unmodified attributes and sets them to a default value
    wave - the wave_info struct to be checked

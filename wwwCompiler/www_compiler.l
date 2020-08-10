@@ -52,6 +52,7 @@ int main(int argc, char **argv) {
   }
 
   www_state state = START;
+  int combinerno;
   wave_info *wave_names[MAX_WAVES] = {NULL};
 
   //tracks the currently outputted waveform
@@ -78,7 +79,10 @@ int main(int argc, char **argv) {
         tok_from_attribute(&state, tok, yyout, wave_names, wave_attribute);
         break;
       case MODIFY:
-        tok_from_modify(&state, tok, yyout, wave_names, wave_attribute);
+        tok_from_modify(&state, tok, yyout, wave_names, wave_attribute, &combinerno);
+        break;
+      case MODIFY_COMBINER:
+        tok_from_modify_combiner(&state, tok, yyout, wave_names, &combinerno);
         break;
       case SHAPE:
         tok_from_shape(&state, tok, yyout, wave_attribute);
