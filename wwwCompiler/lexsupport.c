@@ -219,16 +219,45 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) 
   }
 }
 
+/* creates the code to declare a combiner in memory and advance the compiler to pupulate it
+   state - the state of the compiler which will be set to MODIFY_COMBINER
+   tok - the token which determines which combiner function is set
+   out - the file to write to
+   wave_attribute - string containing the wave and attributes to write the lines for
+   combinerno - determines which combiner data is written to
+*/
+static void create_combiner(www_state *state, int tok, FILE *out, char *wave_attribute, int *combinerno) {
+  fprintf(out, "combined_wave *combiner%d = calloc(1, sizeof(wave_combiner));\n", *combinerno / 3);
+  fprintf(out, "%s.isValue = 3;\n", wave_attribute);
+  fprintf(out, "%s.content.combined = combiner%d;\n", wave_attribute, *combinerno / 3);
+  switch (tok) {
+  case PLUS:
+     fprintf(out, "combiner%d->combiner = add_waves;\n", *combinerno / 3);
+     break;
+  case MINUS:
+     fprintf(out, "combiner%d->combiner = sub_waves;\n", *combinerno / 3);
+     break;
+  case MULTIPLY:
+     fprintf(out, "combiner%d->combiner = mul_waves;\n", *combinerno / 3);
+     break;
+  case DIVIDE:
+     fprintf(out, "combiner%d->combiner = div_waves;\n", *combinerno / 3);
+     break;
+  default:
+    break;
+  }
+  *state = MODIFY_COMBINER;
+  (*combinerno)++;
+}
+
 void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute, int *combinerno) {
   *state = START;
   switch (tok) {
   case PLUS:
-    fprintf(out, "combined_wave *combiner%d = calloc(1, sizeof(wave_combiner));\n", *combinerno / 3);
-    fprintf(out, "%s.isValue = 3;\n", wave_attribute);
-    fprintf(out, "%s.content.combined = combiner%d;\n", wave_attribute, *combinerno / 3);
-    fprintf(out, "combiner%d->combiner = add_waves;\n", *combinerno / 3);
-    *state = MODIFY_COMBINER;
-    (*combinerno)++;
+  case MINUS:
+  case MULTIPLY:
+  case DIVIDE:
+    create_combiner(state, tok, out, wave_attribute, combinerno);
     break;
   case NUMBER:
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
@@ -273,7 +302,7 @@ void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *w
     break;
   case MIDI_FREQUENCY:
     fprintf(out, "combiner%d->value%d->isValue = 2;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d->content.midivalue = FREQUENCY;\n", *combinerno / 3, *combinerno % 3);
+      fprintf(out, "combiner%d->value%d->content.midi_value = FREQUENCY;\n", *combinerno / 3, *combinerno % 3);
     break;
   case MIDI_VELOCITY:
     fprintf(out, "combiner%d->value%d->isValue = 2;\n", *combinerno / 3, *combinerno % 3);

@@ -7,10 +7,10 @@ mainWave.base = SUM sineWave squareWave
 
 sineWave.shape = SINE
 sineWave.frequency = in.frequency
-sineWave.amplitude = 0.5
+sineWave.amplitude = DIV 1 2
 sineWave.attack = 0.3
 
 squareWave.shape = SQUARE
-squareWave.frequency = in.frequency
+squareWave.frequency = MUL in.frequency 2
 squareWave.amplitude = 0.5
-squareWave.attack = 0.3
+squareWave.attack = SUB 1 0.7
