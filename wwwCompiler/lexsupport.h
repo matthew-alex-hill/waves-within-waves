@@ -30,6 +30,10 @@
 #define WAVE_SHAPE (14)
 #define SHAPE_IDENTIFIER (15)
 #define OUTPUT_WAVE (16)
+#define PLUS (17)
+#define MINUS (18)
+#define MULTIPLY (19)
+#define DIVIDE (20)
 #define INVALID (-1)
 
 
@@ -57,6 +61,7 @@ typedef enum compiler_state {
   ATTRIBUTE,        //a wave has been selected to modify and an attribute is being slected
   SHAPE,            //selecting the shape of a wave
   MODIFY,           //modifying the data of a specific attribute
+  MODIFY_COMBINER,  //modifying a combiners value fields
   ERROR,            //compile time error detected
 } www_state;
 

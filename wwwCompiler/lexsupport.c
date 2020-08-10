@@ -222,6 +222,13 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) 
 void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute) {
   *state = START;
   switch (tok) {
+  case PLUS:
+    fprintf(out, "wave_combiner *combiner = calloc(1, sizeof(wave_combiner));\n");
+    fprintf(out, "%s.isValue = 3;\n", wave_attribute);
+    fprintf(out, "%s.content.combined = combiner;\n", wave_attribute);
+    fprintf(out, "%s.content.combined->combiner = add_wave;\n", wave_attribute);
+    *state = MODIFY_COMBINER;
+    break;
   case NUMBER:
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
     fprintf(out, "%s.content.value = %d;\n", wave_attribute, yylval.n);

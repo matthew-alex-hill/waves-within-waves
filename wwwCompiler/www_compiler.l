@@ -18,6 +18,10 @@
 in\.frequency      return MIDI_FREQUENCY;
 in\.velocity       return MIDI_VELOCITY;
 play               return OUTPUT_WAVE;
+SUM                return PLUS;
+SUB                return MINUS;
+MUL                return MULTIPLY;
+DIV                return DIVIDE;
 [0-9]+             yylval.n=atoi(yytext); return NUMBER;
 [0.9]+\.[0-9]+     yylval.d=atof(yytext); return FLOAT;
 [a-z][a-zA-Z0-9]*  yylval.s=strdup(yytext); return WAVE_IDENTIFIER;
