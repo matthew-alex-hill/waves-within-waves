@@ -27,8 +27,8 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) 
   case 3:
     //a combined wave
     combined = (combined_wave *) waveValue->content.combined;
-    return combined->combiner(getValue(combined->value1, time, note),
-			      getValue(combined->value2, time, note));
+    return combined->combiner(getValue(&combined->value1, time, note),
+			      getValue(&combined->value2, time, note));
   default:
     return 0;
   }

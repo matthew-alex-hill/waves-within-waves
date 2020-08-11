@@ -118,8 +118,8 @@ typedef struct wave_value_struct {
    combiner is the function pointer to the combining function
 */
 typedef struct combined_wave {
-  wave_value *value1;
-  wave_value *value2;
+  wave_value value1;
+  wave_value value2;
   wave_combiner combiner;
 } combined_wave;
 

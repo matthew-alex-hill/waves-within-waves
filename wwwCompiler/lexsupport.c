@@ -227,7 +227,7 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) 
    combinerno - determines which combiner data is written to
 */
 static void create_combiner(www_state *state, int tok, FILE *out, char *wave_attribute, int *combinerno) {
-  fprintf(out, "combined_wave *combiner%d = calloc(1, sizeof(wave_combiner));\n", *combinerno / 3);
+  fprintf(out, "combined_wave *combiner%d = calloc(1, sizeof(combined_wave));\n", *combinerno / 3);
   fprintf(out, "%s.isValue = 3;\n", wave_attribute);
   fprintf(out, "%s.content.combined = combiner%d;\n", wave_attribute, *combinerno / 3);
   switch (tok) {
@@ -293,25 +293,25 @@ void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names
 void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], int *combinerno) {
   switch (tok) {
   case NUMBER:
-      fprintf(out, "combiner%d->value%d->isValue = 1;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d->content.value = %d;\n", *combinerno / 3, *combinerno % 3, yylval.n);
+      fprintf(out, "combiner%d->value%d.isValue = 1;\n", *combinerno / 3, *combinerno % 3);
+      fprintf(out, "combiner%d->value%d.content.value = %d;\n", *combinerno / 3, *combinerno % 3, yylval.n);
     break;
   case FLOAT:
-    fprintf(out, "combiner%d->value%d->isValue = 1;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d->content.value = %lf;\n", *combinerno / 3, *combinerno % 3, yylval.d);
+    fprintf(out, "combiner%d->value%d.isValue = 1;\n", *combinerno / 3, *combinerno % 3);
+      fprintf(out, "combiner%d->value%d.content.value = %lf;\n", *combinerno / 3, *combinerno % 3, yylval.d);
     break;
   case MIDI_FREQUENCY:
-    fprintf(out, "combiner%d->value%d->isValue = 2;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d->content.midi_value = FREQUENCY;\n", *combinerno / 3, *combinerno % 3);
+    fprintf(out, "combiner%d->value%d.isValue = 2;\n", *combinerno / 3, *combinerno % 3);
+      fprintf(out, "combiner%d->value%d.content.midi_value = FREQUENCY;\n", *combinerno / 3, *combinerno % 3);
     break;
   case MIDI_VELOCITY:
-    fprintf(out, "combiner%d->value%d->isValue = 2;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d->content.midi_value = VELOCITY;\n", *combinerno / 3, *combinerno % 3);
+    fprintf(out, "combiner%d->value%d.isValue = 2;\n", *combinerno / 3, *combinerno % 3);
+      fprintf(out, "combiner%d->value%d.content.midi_value = VELOCITY;\n", *combinerno / 3, *combinerno % 3);
     break;
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
-      fprintf(out, "combiner%d->value%d->isValue = 0;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d->content.nested_wave = %s;\n", *combinerno / 3, *combinerno % 3, yylval.s);
+      fprintf(out, "combiner%d->value%d.isValue = 0;\n", *combinerno / 3, *combinerno % 3);
+      fprintf(out, "combiner%d->value%d.content.nested_wave = %s;\n", *combinerno / 3, *combinerno % 3, yylval.s);
     } else {
       *state = ERROR;
       printf("ERROR: unknown wave %s ", yylval.s);

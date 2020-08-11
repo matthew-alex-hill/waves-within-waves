@@ -15,7 +15,7 @@
 
 //CURRENTLY UNUSED
 //The number of seconds to play any test audio for
-#define PLAYTIME (1)
+#define PLAYTIME (0)
 
 //error checker for portaudio
 #define PA_CHECK(err) \
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
   midi_note *temp_note; //temporary pointer used to add notes to notes_info
 
   //TODO: add user controlled while loop exit condition
-  while (midi_input_time < 30000) {
+  while (midi_input_time < PLAYTIME * 1000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
     
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
