@@ -8,14 +8,14 @@
 #include <string.h>
 #include <assert.h>
 
-//#define DEBUG //Uncomment me for debuggging information in runtime
+#define DEBUG //Uncomment me for debuggging information in runtime
 
 //the default sample rate for portaudio to use, how many times the callback is called every second
 #define SAMPLE_RATE (44100)
 
 //CURRENTLY UNUSED
 //The number of seconds to play any test audio for
-#define PLAYTIME (0)
+#define PLAYTIME (30)
 
 //error checker for portaudio
 #define PA_CHECK(err) \
@@ -122,6 +122,7 @@ int main(int argc, char **argv) {
 
   PM_CHECK(pm_err);
 
+  /* TODO: masking stops any messages getting through
   //only read midi messages from channel 1
   Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
   PM_CHECK(pm_err);
@@ -129,7 +130,8 @@ int main(int argc, char **argv) {
   //only receive note on or note off messages
   Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
   PM_CHECK(pm_err);
-
+  */
+  
   //structure used to pass the list of notes to the portaudio callback
   notes_data notes_info = {0};
 
@@ -240,11 +242,13 @@ int main(int argc, char **argv) {
   //TODO: add user controlled while loop exit condition
   while (midi_input_time < PLAYTIME * 1000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
-    
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
       //decode all new midi messages
       for(int i = 0; i < no_read; i++) {
 	event = &midi_messages[i];
+#ifdef DEBUG
+	printf("received message %d\n", event->message);
+#endif
 	if (Pm_MessageStatus(event->message) == 144) {
 	  //NOTE ON
 	  temp_note = malloc(sizeof(midi_note));
@@ -260,7 +264,7 @@ int main(int argc, char **argv) {
 	  addNote(notes_info.notes, &notes_info.length, temp_note);
 
 #ifdef DEBUG
-	  printf("adding key %d\n", notes_info.notes[j]->frequency);
+	  printf("adding key %f\n", notes_info.notes[i]->frequency);
 #endif
 	} else if (Pm_MessageStatus(event->message) == 128) {
 	  //NOTE OFF
@@ -272,7 +276,7 @@ int main(int argc, char **argv) {
 	      notes_info.notes[j]->pressed = RELEASED;
 	      notes_info.notes[j]->pressed_time = 0;
 #ifdef DEBUG
-	      printf("releasing key %d\n", notes_info.notes[j]->frequency);
+	      printf("releasing key %f\n", notes_info.notes[j]->frequency);
 #endif
 	    }
 	  }
