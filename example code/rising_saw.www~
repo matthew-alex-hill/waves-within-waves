@@ -1,0 +1,14 @@
+play mainWave
+frequencyWave
+
+mainWave.shape = SAW
+mainWave.frequency = frequencyWave
+mainWave.amplitude = in.velocity
+mainWave.attack = 2
+mainwave.release = 2
+
+frequencyWave.shape = SQUARE
+frequencyWave.amplitude = in.frequency
+frequencyWave.frequency = 0
+frequencyWave.attack = 2
+frequencyWave.release = 2
