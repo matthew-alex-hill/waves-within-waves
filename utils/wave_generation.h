@@ -78,21 +78,13 @@ typedef enum midi_note_value {
    pressed - whether the note is held down or not
    pressed_time - time since note was pressed / released
    velocity - amplitude of note
-   frequency - frequency of note 
-   attack - the attack value used by the note
-   decay - the decay value used by the note
-   sustain - the sustain value used by the note
-   release - the release value used by the note
+   frequency - frequency of note
 */
 typedef struct midi_note {
   note_status pressed;
   clock pressed_time;
   wave_output velocity;
-  wave_output frequency;
-  wave_output attack;
-  wave_output decay;
-  wave_output sustain;
-  wave_output release;  
+  wave_output frequency;  
 } midi_note;
 
 /*the content of a wave value, which is one of

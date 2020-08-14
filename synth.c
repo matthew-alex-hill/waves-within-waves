@@ -54,10 +54,12 @@ static int paWavesWithinWavesCallback(const void *input,
       //TODO: segfaulting bug caused here
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
 
+      /* TODO: this no longer works now the adsr system has been reworked
       //if the note has been released and has fell to 0 volume, delete it
       if (notes[i]->pressed == RELEASED && notes[i]->pressed_time > notes[i]->release) {
 	removeNote(notes, &data->notes_info->length, i);
       }
+      */
     }
     if (data->notes_info->length != 0) {
       current_value = (float) (current_value / data->notes_info->length);
@@ -176,9 +178,10 @@ int main(int argc, char **argv) {
   wave_output out = 0;
 
   //default note, a middle c
-  midi_note *note = malloc(sizeof(midi_note));
+  midi_note *note = calloc(1, sizeof(midi_note));
   note->frequency = 120;
-
+  note->velocity = 127;
+  note->pressed = HELD;
   addNote(notes_info.notes, &notes_info.length, note);
 
   //file output for graph plotting
