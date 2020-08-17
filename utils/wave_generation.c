@@ -6,8 +6,11 @@
 
 /* gets the value of a parameter of a wave at the current time
    waveValue - the wave_value struct of the parameter eg. frequency
-   time - the current time */
-static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) {
+   time - the current time 
+   note - the note being processed
+   note_dependant_flag - the flag that will be set if a value is note dependant
+*/
+static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, int *note_dependant_flag) {
   Wave *nested;
   combined_wave *combined;
   switch (waveValue->isValue) {
@@ -20,6 +23,7 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) 
     return sampleWave(nested, time, note);
   case 2:
     //a midi note's value
+    note_dependant_flag = 0;
     if (waveValue->content.midi_value == FREQUENCY) {
       return (440 * pow(2, (note->frequency - 69)/12));
     }
@@ -34,11 +38,30 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note) 
   }
 }
 
-wave_output sampleWave(Wave *wave, clock time, midi_note *note) {
+/* either samples the wave attribute if it is note dependant or returns the precalculated value if it is universal
+   attribute - the wave attribute pointer to be sampled
+   note_dependant_flag - int stating whether the attribute is note dependant or not
+   calculated_value - either a precalculated value to return or a memory slot to write a newly calculated value into
+*/
+static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependant_flag, wave_output *calculated_value) {
+  wave_output out;
+  if (!*note_dependant_flag) {
+    *note_dependant_flag = 1;
+    out = getValue(attribute, time, note, note_dependant_flag);
+    if (*note_dependant_flag) {
+      *calculated_value = out;
+    }
+  } else {
+    out = *calculated_value;
+  }
+  return out;
+}
+
+wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags) {
   wave_output base, frequency, amplitude, phase, attack, decay, sustain, release;
 
   //sets wave values to their values at the current time
-  base = getValue(&wave->base, time, note);
+  
   frequency = getValue(&wave->frequency, time, note);
   amplitude = getValue(&wave->amplitude, time, note);
   phase = getValue(&wave->phase, time, note);

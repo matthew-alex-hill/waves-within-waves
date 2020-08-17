@@ -129,12 +129,37 @@ typedef struct wave_struct {
   wave_value release;   //length of time to decay from sustain to 0
 } Wave;
 
+/* struct used to store whether sampled values can be re-used or not 
+   ints - flags stating whether a value is note dependant or universal to all  notes
+   0 = note dependant, 1 = universal
+   wave_outputs - the sampled value for each universal attribute
+*/
+typedef struct wave_value_processing_flags {
+  int base;
+  int frequency;
+  int amplitude;
+  int phase;
+  int attack;
+  int decay;
+  int sustain;
+  int release;
+  
+  wave_output base_value;
+  wave_output frequency_value;
+  wave_output amplitude_value;
+  wave_output phase_value;
+  wave_output attack_value;
+  wave_output decay_value;
+  wave_output sustain_value;
+  wave_output release_value;
+} processing_flags;
+
 /* get an output value from a wave at a given time
    wave - pointer to the wave struct
    time - the time to sample at
    note - the note that is being sampled
 */
-wave_output sampleWave(Wave *wave, clock time, midi_note *note);
+wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags);
 
 /* sample a generic wave shape given a list of the wave parameters as values
    All arguments are the same as the attributes in the Wave struct and will be the result of sampleWave's calculations
