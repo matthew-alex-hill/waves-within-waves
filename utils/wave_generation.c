@@ -48,16 +48,17 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, 
 */
 static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependant_flag, wave_output *calculated_value, int flag_set, processing_flags *flags, clock time, midi_note *note) {
   wave_output out;
-  if (!*note_dependant_flag) {
-    if (flag_set) {
+
+  if (flag_set) {
+    if (!*note_dependant_flag) {
       *note_dependant_flag = 1;
-    }
-    out = getValue(attribute, time, note, note_dependant_flag, flags);
-    if (flag_set && *note_dependant_flag) {
+      out = getValue(attribute, time, note, note_dependant_flag, flags);
       *calculated_value = out;
+    } else  {
+      out = *calculated_value;
     }
   } else {
-    out = *calculated_value;
+    out = getValue(attribute, time, note, note_dependant_flag, flags);
   }
   return out;
 }

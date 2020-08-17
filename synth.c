@@ -25,6 +25,7 @@ typedef struct synth_data {
   clock *time;
   notes_data *notes_info;
   Wave *wave;
+  processing_flags *flags;
 } synth_data;
 
 /*This is the callback function used by portaudio to output audio waveforms
@@ -43,14 +44,25 @@ static int paWavesWithinWavesCallback(const void *input,
   
   //extracting key items from data for clarity in the rest of the function
   Wave *wave = data->wave;
+  processing_flags *flags = data->flags;
   midi_note **notes = data->notes_info->notes;
   
   float current_value;
-  
+
   for (unsigned int i = 0; i < frameCount; i++) {
     current_value = 0;
+    //ensures all values are recalculated at the start of each frame
+    flags->base = 0;
+    flags->frequency = 0;
+    flags->amplitude = 0;
+    flags->phase = 0;
+    flags->attack = 0;
+    flags->decay = 0;
+    flags->sustain = 0;
+    flags->release = 0;
+  
     for(int i = 0; i < data->notes_info->length; i++) {
-      current_value += (float) sampleWave(wave, *(data->time), notes[i]);
+      current_value += (float) sampleWave(wave, *(data->time), notes[i], flags, 1);
       //TODO: segfaulting bug caused here
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
 
@@ -81,7 +93,8 @@ int main(int argc, char **argv) {
   PmError pm_err = pmNoError;
   PtError pt_err = ptNoError;
   Wave *wave = NULL;
-
+  processing_flags flags = {0};
+  
   //booleans stating whether there are input and output files
   int inFile = 0, outFile = 0;
   int device_index;
@@ -189,9 +202,19 @@ int main(int argc, char **argv) {
   //file output for graph plotting
   if (outFile) {
     while (time <= limit) {
+      //ensures all values are recalculated at the start of each frame
+      flags.base = 0;
+      flags.frequency = 0;
+      flags.amplitude = 0;
+      flags.phase = 0;
+      flags.attack = 0;
+      flags.decay = 0;
+      flags.sustain = 0;
+      flags.release = 0;
       out = 0;
+      
       for (int i = 0; i < notes_info.length; i++) {
-	out += sampleWave(wave, time, notes_info.notes[i]);
+	out += sampleWave(wave, time, notes_info.notes[i], &flags, 1);
 	notes_info.notes[i]->pressed_time += increments;
       }
 
@@ -214,7 +237,7 @@ int main(int argc, char **argv) {
   time = 0;
 
   //data struct passed to portaudio callback as userData
-  synth_data data = {&time, &notes_info, wave};
+  synth_data data = {&time, &notes_info, wave, &flags};
   
   //opens a stereo output stream in stream with wave as an input
   pa_err = Pa_OpenDefaultStream(&stream,
