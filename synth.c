@@ -62,7 +62,7 @@ static int paWavesWithinWavesCallback(const void *input,
     flags->release = 0;
   
     for(int i = 0; i < data->notes_info->length; i++) {
-      current_value += (float) sampleWave(wave, *(data->time), notes[i], flags, 1);
+      current_value += (float) sampleWave(wave, *(data->time), notes[i], flags, 1, NULL);
       //TODO: segfaulting bug caused here
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
 
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
   //parameters used to produce the output graph
   clock time = 0;
   clock increments = 0.00001;
-  clock limit = 20;
+  clock limit = 0.0001;
   wave_output out = 0;
 
   //default note, a middle c
@@ -198,6 +198,7 @@ int main(int argc, char **argv) {
   note->velocity = 127;
   note->pressed = HELD;
   addNote(notes_info.notes, &notes_info.length, note);
+  //addNote(notes_info.notes, &notes_info.length, note);
 
   //file output for graph plotting
   if (outFile) {
@@ -212,9 +213,9 @@ int main(int argc, char **argv) {
       flags.sustain = 0;
       flags.release = 0;
       out = 0;
-      
+
       for (int i = 0; i < notes_info.length; i++) {
-	out += sampleWave(wave, time, notes_info.notes[i], &flags, 1);
+	out += sampleWave(wave, time, notes_info.notes[i], &flags, 1, NULL);
 	notes_info.notes[i]->pressed_time += increments;
       }
 
@@ -231,6 +232,7 @@ int main(int argc, char **argv) {
   }
 
   removeNote(notes_info.notes, &notes_info.length, 0); //removes testing note
+  //removeNote(notes_info.notes, &notes_info.length, 1); //removes testing note
   
   PaStream *stream;
   

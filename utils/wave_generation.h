@@ -160,8 +160,10 @@ typedef struct wave_value_processing_flags {
    note - the note that is being sampled
    flags - set of flags indicatng whether each value needs to be processed or not
    flag_set - boolean as to whether to set flags or not, should be 1 on top layer calls, 0 on recursive calls
+   host_dependancy_pointer - unused if flag_set is 1
+                             if flag_set is 0 it is a ponter to the note dependancy flag of the top level host note value
 */
-wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags, int flag_set);
+wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags, int flag_set, int *host_dependancy_pointer);
 
 /* sample a generic wave shape given a list of the wave parameters as values
    All arguments are the same as the attributes in the Wave struct and will be the result of sampleWave's calculations

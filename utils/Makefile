@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -O4 -g -D_DEFAULT_SOURCE -std=c99 -pedantic
+CFLAGS = -Wall -Wextra -g -D_DEFAULT_SOURCE -std=c99 -pedantic
 LIB = libwave_utils.a
 LIBOBJS = wave_generation.o synth_source.o midi_management.o
 BUILD = $(LIB)
