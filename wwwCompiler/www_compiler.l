@@ -14,7 +14,10 @@
 \.decay[ \t]*=     return WAVE_DECAY;
 \.sustain[ \t]*=   return WAVE_SUSTAIN;
 \.release[ \t]*=   return WAVE_RELEASE;
+\.cutoff[ \t]*=    return WAVE_CUTOFF;
+\.resonance[ \t]*= return WAVE_RESONANCE;
 \.shape[ \t]*=     return WAVE_SHAPE;
+\.filter[ \t]*=    return WAVE_FILTER;
 in\.frequency      return MIDI_FREQUENCY;
 in\.velocity       return MIDI_VELOCITY;
 play               return OUTPUT_WAVE;
@@ -25,7 +28,7 @@ DIV                return DIVIDE;
 [0-9]+             yylval.n=atoi(yytext); return NUMBER;
 [0.9]+\.[0-9]+     yylval.d=atof(yytext); return FLOAT;
 [a-z][a-zA-Z0-9]*  yylval.s=strdup(yytext); return WAVE_IDENTIFIER;
-[A-Z]*             yylval.s=strdup(yytext); return SHAPE_IDENTIFIER;
+[A-Z_]*             yylval.s=strdup(yytext); return PROPERTY_IDENTIFIER;
 [ \t\n]+           /* whitespace ignored */
 \/\/(.*)           /* single line comment */
 .                  return INVALID;
@@ -86,6 +89,9 @@ int main(int argc, char **argv) {
         break;
       case SHAPE:
         tok_from_shape(&state, tok, yyout, wave_attribute);
+        break;
+      case FILTER:
+        tok_from_filter(&state, tok, yyout, wave_attribute);
         break;
       case ERROR:
         break;

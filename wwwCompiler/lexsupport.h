@@ -9,9 +9,13 @@
 /* maximum length of a wave name */
 #define MAX_NAME_LENGTH (30)
 
-/* determines if a SHAPE_IDENTIFIER token contains a valid shape identifier */
+/* determines if a PROPERTY_IDENTIFIER token contains a valid shape identifier */
 #define IS_VALID_SHAPE(s) \
   (!strcmp(s,"SAW") || !strcmp(s,"SINE") || !strcmp(s,"SQUARE") || !strcmp(s,"TRIANGLE") || !strcmp(s,"EMPTY"))
+
+/* determines if a PROPERTY_IDENTIFIER token contains a valid filter identifier */
+#define IS_VALID_FILTER(s) \
+  (!strcmp(s, "NONE") || !strcmp(s, "LOW_PASS") || !strcmp(s, "HIGH_PASS"))
 
 /* Tokens */
 #define NUMBER (1)
@@ -27,13 +31,16 @@
 #define WAVE_DECAY (11)
 #define WAVE_SUSTAIN (12)
 #define WAVE_RELEASE (13)
-#define WAVE_SHAPE (14)
-#define SHAPE_IDENTIFIER (15)
-#define OUTPUT_WAVE (16)
-#define PLUS (17)
-#define MINUS (18)
-#define MULTIPLY (19)
-#define DIVIDE (20)
+#define WAVE_CUTOFF (14)
+#define WAVE_RESONANCE (15)  
+#define WAVE_SHAPE (16)
+#define WAVE_FILTER (17)  
+#define PROPERTY_IDENTIFIER (18)
+#define OUTPUT_WAVE (20)
+#define PLUS (21)
+#define MINUS (22)
+#define MULTIPLY (23)
+#define DIVIDE (24)
 #define INVALID (-1)
 
 
@@ -46,6 +53,8 @@
 #define DECAY_DEFAULT (0)
 #define SUSTAIN_DEFAULT (1)
 #define RELEASE_DEFAULT (0)
+#define CUTOFF_DEFAULT (0)
+#define RESONANCE_DEFAULT (0)
 
 /* data type that ccan be stored by tokens */
 typedef union {
@@ -60,6 +69,7 @@ typedef enum compiler_state {
   SELECT,           //selecting an outputted wave
   ATTRIBUTE,        //a wave has been selected to modify and an attribute is being slected
   SHAPE,            //selecting the shape of a wave
+  FILTER,           //selecting the filter type of a wave
   MODIFY,           //modifying the data of a specific attribute
   MODIFY_COMBINER,  //modifying a combiners value fields
   ERROR,            //compile time error detected
@@ -78,6 +88,8 @@ typedef struct compiler_wave_info {
   int decay;
   int sustain;
   int release;
+  int cutoff;
+  int resonance;
 } wave_info;
 
 extern YYSTYPE yylval; //token value
@@ -123,6 +135,14 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_na
    wave_attribute - a pointer to the global string that shows the current line opening */
 void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute);
 
+/* uses a token to advance the compiler state when in state FILTER
+   also writes shape attribute modifications lines 
+   state - pointer to a global state variable to modify
+   tok - the current token 
+   out - the file to write lines of code to
+   wave_attribute - a pointer to the global string that shows the current line opening */
+void tok_from_filter(www_state *state, int tok, FILE *out, char *wave_attribute);
+
 /* uses a token to advance the compiler state when in state MODIFY 
    state - pointer to a global state variable to modify
    tok - the current token 
@@ -153,12 +173,16 @@ void write_defaults(wave_info *wave, FILE *out);
    SELECT - WAVE_IDENTIFIER expected
             WAVE_IDENTIFIER -> START
 
-   ATTRIBUTE - WAVE_SHAPE or WAVE_BASE or WAVE_FREQUENCY or WAVE_AMPLITUDE or WAVE_PHASE or WAVE_ATTACK or WAVE_DECAY or WAVE_SUSTAIN or WAVE_RELEASE expected
+   ATTRIBUTE - WAVE_SHAPE or WAVE_FILTER or WAVE_BASE or WAVE_FREQUENCY or WAVE_AMPLITUDE or WAVE_PHASE or WAVE_ATTACK or WAVE_DECAY or WAVE_SUSTAIN or WAVE_RELEASE or WAVE_CUTOFF or WAVE_RESONANCE expected
                WAVE_SHAPE -> SHAPE
+	       WAVE_FILTER -> FILTER
 	       OTHERS -> MODIFY
 
-   SHAPE - SHAPE_IDENTIFIER expected
-           SHAPE_IDENTIFIER -> START
+   SHAPE - PROPERTY_IDENTIFIER expected
+           PROPERTY_IDENTIFIER -> START
+
+   FILTER - PROPERTY_IDENTIFIER expected
+            PROPERTY_IDENTIFIER -> START
 
    MODIFY - NUMBER or FLOAT or MIDI_FREQUENCY or MIDI_VELOCITY or WAVE_IDENTIFIER expected
             ALL -> START

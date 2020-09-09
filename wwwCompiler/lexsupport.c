@@ -45,9 +45,36 @@ void print_token(FILE *out, int tok) {
   case WAVE_RELEASE:
     fputs("release", out);
     break;
+  case WAVE_CUTOFF:
+    fputs("cutoff", out);
+    break;
+  case WAVE_RESONANCE:
+    fputs("resonance", out);
+    break;
+  case WAVE_SHAPE:
+    fputs("shape", out);
+    break;
+  case WAVE_FILTER:
+    fputs("filter", out);
+    break;
+  case PROPERTY_IDENTIFIER:
+    fprintf(out, "property_name(%s)", yylval.s);
+    break;
   case OUTPUT_WAVE:
     fputs("output select", out);
     break;
+  case PLUS:
+    fputs("+", out);
+    break;
+  case MINUS:
+    fputs("-", out);
+    break;
+  case MULTIPLY:
+    fputs("*", out);
+    break;
+  case DIVIDE:
+    fputs("/", out);
+    break;  
   case INVALID:
     fputs("invalid syntax", out);
     break;  
@@ -163,6 +190,9 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_na
   case WAVE_SHAPE:
     *state = SHAPE;
     break;
+  case WAVE_FILTER:
+    *state = FILTER;
+    break;
   case WAVE_BASE:
     wave_names[index]->base = 1;
     strcat(wave_attribute, "->base");
@@ -195,6 +225,14 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_na
     wave_names[index]->release = 1;
     strcat(wave_attribute, "->release");
     break;
+  case WAVE_CUTOFF:
+    wave_names[index]->cutoff = 1;
+    strcat(wave_attribute, "->cutoff");
+    break;
+  case WAVE_RESONANCE:
+    wave_names[index]->resonance = 1;
+    strcat(wave_attribute, "->resonance");
+    break;
   default:
     //invalid syntax as an attribute is not mentioned
     *state = ERROR;
@@ -204,7 +242,7 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_na
 
 void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) {
   switch (tok) {
-  case SHAPE_IDENTIFIER:
+  case PROPERTY_IDENTIFIER:
     if (IS_VALID_SHAPE(yylval.s)) {
       fprintf(out, "%s->shape = %s;\n", wave_attribute, yylval.s);
       *state = START;
@@ -215,7 +253,24 @@ void tok_from_shape(www_state *state, int tok, FILE *out, char *wave_attribute) 
     break;
   default:
     *state = ERROR;
-    printf("ERROR: expected shape identifier ");
+    printf("ERROR: expected property identifier ");
+  }
+}
+
+void tok_from_filter(www_state *state, int tok, FILE *out, char *wave_attribute) {
+  switch (tok) {
+  case PROPERTY_IDENTIFIER:
+    if (IS_VALID_FILTER(yylval.s)) {
+      fprintf(out, "%s->filter = %s;\n", wave_attribute, yylval.s);
+      *state = START;
+    } else {
+      printf("Invalid filter %s ", yylval.s);
+      *state = ERROR;
+    }
+    break;
+  default:
+    *state = ERROR;
+    printf("ERROR: expected property identifier ");
   }
 }
 
@@ -354,5 +409,11 @@ void write_defaults(wave_info *wave, FILE *out) {
   }
   if (!wave->release) {
     fprintf(out, "%s->release.isValue = 1;\n%s->release.content.value = %d;\n", wave->wave_name, wave->wave_name, RELEASE_DEFAULT);
+  }
+  if (!wave->cutoff) {
+    fprintf(out, "%s->cutoff.isValue = 1;\n%s->cutoff.content.value = %d;\n", wave->wave_name, wave->wave_name, CUTOFF_DEFAULT);
+  }
+  if (!wave->resonance) {
+    fprintf(out, "%s->resonance.isValue = 1;\n%s->resonance.content.value = %d;\n", wave->wave_name, wave->wave_name, RESONANCE_DEFAULT);
   }
 }
