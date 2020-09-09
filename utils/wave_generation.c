@@ -64,8 +64,24 @@ static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependan
   return out;
 }
 
+static wave_output filterLowPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+  if (frequency <= cutoff) {
+    return 1;
+  }
+  //TODO: placeholder low pass attenuation function for testing
+  return 1 - (frequency - cutoff) / 200;
+}
+
+static wave_output filterHighPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+  if (frequency >= cutoff) {
+    return 1;
+  }
+  //TODO: placeholder high pass attenuation function
+  return 1 - (cutoff - frequency) / 200;
+}
+
 wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags, int flag_set, int *host_dependancy_pointer) {
-  wave_output base, frequency, amplitude, phase, attack, decay, sustain, release;
+  wave_output base, frequency, amplitude, phase, attack, decay, sustain, release, cutoff, resonance;
 
   //sets wave values to their values at the current time
   base = sampleWaveAttribute(&wave->base, &flags->base, &flags->base_value, host_dependancy_pointer, flag_set, flags, time, note);
@@ -97,6 +113,21 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
     //releasing
     if (release > 0) {
       dampner = sustain - note->pressed_time * (sustain / release);
+    }
+  }
+
+  if (dampner == 0) {
+    return 0;
+  }
+
+  if (wave->filter != NONE) {
+    cutoff = sampleWaveAttribute(&wave->cutoff, &flags->cutoff, &flags->cutoff_value, host_dependancy_pointer, flag_set, flags, time, note);
+    resonance = sampleWaveAttribute(&wave->resonance, &flags->resonance, &flags->resonance_value, host_dependancy_pointer, flag_set, flags, time, note);
+
+    if (wave->filter == LOW_PASS) {
+      dampner = dampner * filterLowPass(cutoff, resonance, frequency);
+    } else if (wave->filter == HIGH_PASS) {
+      dampner = dampner * filterHighPass(cutoff, resonance, frequency);
     }
   }
 

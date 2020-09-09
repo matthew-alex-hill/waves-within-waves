@@ -74,6 +74,13 @@ typedef enum midi_note_value {
   VELOCITY
 } note_value;
 
+//The type of filter on a wave
+typedef enum filter_type {
+  NONE,
+  HIGH_PASS,
+  LOW_PASS
+} filter_type;
+
 /* the values stored in a MIDI note 
    pressed - whether the note is held down or not
    pressed_time - time since note was pressed / released
@@ -127,6 +134,10 @@ typedef struct wave_struct {
   wave_value decay;     //length of time for volume to decrease to sustain level
   wave_value sustain;   //sustained volume level from 0 to 1
   wave_value release;   //length of time to decay from sustain to 0
+
+  filter_type filter;   //type of filter on the wave
+  wave_value cutoff;    //the cutoff frequency of the filter
+  wave_value resonance; //the amount of resonance around the cutoff frequency
 } Wave;
 
 /* struct used to store whether sampled values can be re-used or not 
@@ -143,6 +154,8 @@ typedef struct wave_value_processing_flags {
   int decay;
   int sustain;
   int release;
+  int cutoff;
+  int resonance;
   
   wave_output base_value;
   wave_output frequency_value;
@@ -152,6 +165,8 @@ typedef struct wave_value_processing_flags {
   wave_output decay_value;
   wave_output sustain_value;
   wave_output release_value;
+  wave_output cutoff_value;
+  wave_output resonance_value;
 } processing_flags;
 
 /* get an output value from a wave at a given time
@@ -169,7 +184,7 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
    All arguments are the same as the attributes in the Wave struct and will be the result of sampleWave's calculations
 */
 wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time);
-
+ 
 /* frees a wave and all nested waves within it
    wave - the wave to be freed
 */
