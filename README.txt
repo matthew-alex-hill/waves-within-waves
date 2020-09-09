@@ -47,6 +47,7 @@ If there are no instances of the play keyword your code will not compile
 Adjusting Attributes:
 Waves currently have 9 attributes:
  -shape - the shape of the waveform
+ -filter - the type of filter applied on the waveform
  -base - the value around which the wave oscillates
  -frequency - the number of full oscillations per second
  -amplitude - the maximum displaement from the base value
@@ -55,6 +56,8 @@ Waves currently have 9 attributes:
  -decay - How long it takes for a wave to decay from maximum to sustained amplitude in seconds
  -sustain - The fraction of maximum amplitude a note stays at when held down (from 0 to 1)
  -release - How long it takes to decay from sustained amplitude to 0 amplitude in seconds
+ -cutoff - The cutoff frequency of the filter on a wave
+ -resonance - The amount of resonance around the cutoff frequency on the filter on a wave
 
 Adjusting shape:
 Shape adjustments are of the form
@@ -68,6 +71,14 @@ SAW
 SINE
 SQUARE
 TRIANGLE
+
+Adjusting filter:
+Filter adjustments are in the same syntax as shape adjustments
+
+Valid filter values are:
+NONE
+LOW_PASS
+HIGH_PASS
 
 Adjusting other fields:
 All other value assignments are of the form
@@ -95,3 +106,5 @@ attack = 0
 decay = 0
 sustain = 1
 release = 0
+cutoff = 0
+resonance = 0
