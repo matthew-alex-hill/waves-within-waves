@@ -78,7 +78,8 @@ typedef enum midi_note_value {
 typedef enum filter_type {
   NONE,
   HIGH_PASS,
-  LOW_PASS
+  LOW_PASS,
+  BAND_PASS,
 } filter_type;
 
 /* the values stored in a MIDI note 

@@ -15,7 +15,7 @@
 
 /* determines if a PROPERTY_IDENTIFIER token contains a valid filter identifier */
 #define IS_VALID_FILTER(s) \
-  (!strcmp(s, "NONE") || !strcmp(s, "LOW_PASS") || !strcmp(s, "HIGH_PASS"))
+  (!strcmp(s, "NONE") || !strcmp(s, "LOW_PASS") || !strcmp(s, "HIGH_PASS") || !strcmp(s, "BAND_PASS"))
 
 /* Tokens */
 #define NUMBER (1)

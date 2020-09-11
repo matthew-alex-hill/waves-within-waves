@@ -21,6 +21,10 @@ mainWave->sustain.content.value = 0;
 mainWave->release.isValue = 1;
 mainWave->release.content.value = 0;
 /* default values */
+mainWave->cutoff.isValue = 1;
+mainWave->cutoff.content.value = 0;
+mainWave->resonance.isValue = 1;
+mainWave->resonance.content.value = 0;
 *out = mainWave;
 return OK;
 }

@@ -65,19 +65,31 @@ static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependan
 }
 
 static wave_output filterLowPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+  (void) resonance;
   if (frequency <= cutoff) {
     return 1;
   }
   //TODO: placeholder low pass attenuation function for testing
-  return 1 - (frequency - cutoff) / 200;
+  return 1 - (frequency - cutoff) * (frequency - cutoff) / (200 * 200);
 }
 
 static wave_output filterHighPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+  (void) resonance;
   if (frequency >= cutoff) {
     return 1;
   }
   //TODO: placeholder high pass attenuation function
-  return 1 - (cutoff - frequency) / 200;
+  return 1 - (cutoff - frequency) * (cutoff - frequency) / (200 * 200);
+}
+
+static wave_output filterBandPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+  if (frequency < cutoff - resonance / 2) {
+    return filterHighPass(cutoff - resonance / 2, 0, frequency);
+  }
+  if (frequency > cutoff + resonance / 2) {
+    return filterLowPass(cutoff + resonance / 2, 0, frequency);
+  }
+  return 1;
 }
 
 wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags, int flag_set, int *host_dependancy_pointer) {
@@ -128,6 +140,8 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
       dampner = dampner * filterLowPass(cutoff, resonance, frequency);
     } else if (wave->filter == HIGH_PASS) {
       dampner = dampner * filterHighPass(cutoff, resonance, frequency);
+    } else if (wave->filter == BAND_PASS) {
+      dampner = dampner * filterBandPass(cutoff, resonance, frequency);
     }
   }
 
