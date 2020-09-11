@@ -126,6 +126,8 @@ typedef struct combined_wave {
 //contains the wave shape and a wave value for each attribute of the wave
 typedef struct wave_struct {
   wave_shape shape;
+
+  wave_value offset;    //the midi key offset of the wave
   wave_value base;      //value around which the wave oscillates
   wave_value frequency; //number of complete oscillations per unit clock time
   wave_value amplitude; //maximum displacement from base
@@ -147,6 +149,7 @@ typedef struct wave_struct {
    wave_outputs - the sampled value for each universal attribute
 */
 typedef struct wave_value_processing_flags {
+  int offset;
   int base;
   int frequency;
   int amplitude;
@@ -157,7 +160,8 @@ typedef struct wave_value_processing_flags {
   int release;
   int cutoff;
   int resonance;
-  
+
+  wave_output offset_value;
   wave_output base_value;
   wave_output frequency_value;
   wave_output amplitude_value;

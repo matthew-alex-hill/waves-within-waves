@@ -11,7 +11,7 @@
    note_dependant_flag - the flag that will be set if a value is note dependant
    flags - a pointer to the processing flags used for recursive calls to sampleWave
 */
-static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, int *note_dependant_flag, processing_flags *flags) {
+static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, int *note_dependant_flag, processing_flags *flags, int offset) {
   Wave *nested;
   combined_wave *combined;
   switch (waveValue->isValue) {
@@ -26,14 +26,14 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, 
     //a midi note's value
     *note_dependant_flag = 0;
     if (waveValue->content.midi_value == FREQUENCY) {
-      return (440 * pow(2, (note->frequency - 69)/12));
+      return (440 * pow(2, ((note->frequency + offset) - 69)/12));
     }
     return note->velocity / 128;
   case 3:
     //a combined wave
     combined = (combined_wave *) waveValue->content.combined;
-    return combined->combiner(getValue(&combined->value1, time, note, note_dependant_flag, flags),
-			      getValue(&combined->value2, time, note, note_dependant_flag, flags));
+    return combined->combiner(getValue(&combined->value1, time, note, note_dependant_flag, flags, offset),
+			      getValue(&combined->value2, time, note, note_dependant_flag, flags, offset));
   default:
     return 0;
   }
@@ -47,19 +47,19 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, 
    flag_set - a boolean saying whether or not to change note_dependant_flag or the calculated value
    flags, note, time - needed for getValue calls
 */
-static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependant_flag, wave_output *calculated_value, int *host_dependancy_pointer, int flag_set, processing_flags *flags, clock time, midi_note *note) {
+static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependant_flag, wave_output *calculated_value, int *host_dependancy_pointer, int flag_set, processing_flags *flags, clock time, midi_note *note, int offset) {
   wave_output out;
   
   if (flag_set) {
     if (!*note_dependant_flag) {
       *note_dependant_flag = 1; //assuming the value isnt note dependant, which is either confirmed in the getValue call or set back to being note dependant
-      out = getValue(attribute, time, note, note_dependant_flag, flags);
+      out = getValue(attribute, time, note, note_dependant_flag, flags, offset);
       *calculated_value = out;
     } else  {
       out = *calculated_value;
     }
   } else {
-    out = getValue(attribute, time, note, host_dependancy_pointer, flags);
+    out = getValue(attribute, time, note, host_dependancy_pointer, flags, offset);
   }
   return out;
 }
@@ -69,7 +69,7 @@ static wave_output filterHighPass(wave_output cutoff, wave_output resonance, wav
   if (frequency <= cutoff) {
     return 1;
   }
-  //TODO: placeholder low pass attenuation function for testing
+  //TODO: placeholder high pass attenuation function for testing
   return 1 - (frequency - cutoff) * (frequency - cutoff) / (200 * 200);
 }
 
@@ -78,7 +78,7 @@ static wave_output filterLowPass(wave_output cutoff, wave_output resonance, wave
   if (frequency >= cutoff) {
     return 1;
   }
-  //TODO: placeholder high pass attenuation function
+  //TODO: placeholder low pass attenuation function
   return 1 - (cutoff - frequency) * (cutoff - frequency) / (200 * 200);
 }
 
@@ -94,23 +94,27 @@ static wave_output filterBandPass(wave_output cutoff, wave_output resonance, wav
 
 wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags *flags, int flag_set, int *host_dependancy_pointer) {
   wave_output base, frequency, amplitude, phase, attack, decay, sustain, release, cutoff, resonance;
-
+  int offset;
+  
+  //calculates offset and rounds it down to an integer
+  offset = (int) sampleWaveAttribute(&wave->offset, &flags->offset, &flags->offset_value, host_dependancy_pointer, flag_set, flags, time, note, 0);
+  
   //sets wave values to their values at the current time
-  base = sampleWaveAttribute(&wave->base, &flags->base, &flags->base_value, host_dependancy_pointer, flag_set, flags, time, note);
-  frequency = sampleWaveAttribute(&wave->frequency, &flags->frequency, &flags->frequency_value, host_dependancy_pointer, flag_set, flags, time, note);
-  amplitude = sampleWaveAttribute(&wave->amplitude, &flags->amplitude, &flags->amplitude_value, host_dependancy_pointer, flag_set, flags, time, note);
-  phase = sampleWaveAttribute(&wave->phase, &flags->phase, &flags->phase_value, host_dependancy_pointer, flag_set, flags, time, note);
+  base = sampleWaveAttribute(&wave->base, &flags->base, &flags->base_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+  frequency = sampleWaveAttribute(&wave->frequency, &flags->frequency, &flags->frequency_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+  amplitude = sampleWaveAttribute(&wave->amplitude, &flags->amplitude, &flags->amplitude_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+  phase = sampleWaveAttribute(&wave->phase, &flags->phase, &flags->phase_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
   
   wave_output dampner = 0;
  
   if (note->pressed == HELD) {
-    attack = sampleWaveAttribute(&wave->attack, &flags->attack, &flags->attack_value, host_dependancy_pointer, flag_set, flags, time, note);
+    attack = sampleWaveAttribute(&wave->attack, &flags->attack, &flags->attack_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
     if (note->pressed_time < attack) {
       //attacking
       dampner = note->pressed_time / attack;
     } else {
-      decay = sampleWaveAttribute(&wave->decay, &flags->decay, &flags->decay_value, host_dependancy_pointer, flag_set, flags, time, note);
-      sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note);
+      decay = sampleWaveAttribute(&wave->decay, &flags->decay, &flags->decay_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+      sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
       if (note->pressed_time < attack + decay) {
 	//decaying
 	dampner = 1 + (sustain - 1) * ((note->pressed_time - attack) / decay);
@@ -120,8 +124,8 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
       }
     }
   } else {
-    sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note);
-    release = sampleWaveAttribute(&wave->release, &flags->release, &flags->release_value, host_dependancy_pointer, flag_set, flags, time, note);
+    sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+    release = sampleWaveAttribute(&wave->release, &flags->release, &flags->release_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
     //releasing
     if (release > 0) {
       dampner = sustain - note->pressed_time * (sustain / release);
@@ -133,8 +137,8 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
   }
 
   if (wave->filter != NONE) {
-    cutoff = sampleWaveAttribute(&wave->cutoff, &flags->cutoff, &flags->cutoff_value, host_dependancy_pointer, flag_set, flags, time, note);
-    resonance = sampleWaveAttribute(&wave->resonance, &flags->resonance, &flags->resonance_value, host_dependancy_pointer, flag_set, flags, time, note);
+    cutoff = sampleWaveAttribute(&wave->cutoff, &flags->cutoff, &flags->cutoff_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+    resonance = sampleWaveAttribute(&wave->resonance, &flags->resonance, &flags->resonance_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
 
     if (wave->filter == LOW_PASS) {
       dampner = dampner * filterLowPass(cutoff, resonance, frequency);
@@ -149,10 +153,6 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
   if (amplitude <= 0) {
     return 0;
   }
-
-  /*if (flag_set) {
-    printf("%d %d %d %d %d %d %d %d\n", flags->base, flags->frequency, flags->amplitude, flags->phase, flags->attack, flags->decay, flags->sustain, flags->release);
-    } */
 
   //returns a wave made by the decoded parameters
   return sampleStandardWave(wave->shape, base, frequency, amplitude, phase, time);
