@@ -64,7 +64,7 @@ static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependan
   return out;
 }
 
-static wave_output filterLowPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+static wave_output filterHighPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
   (void) resonance;
   if (frequency <= cutoff) {
     return 1;
@@ -73,7 +73,7 @@ static wave_output filterLowPass(wave_output cutoff, wave_output resonance, wave
   return 1 - (frequency - cutoff) * (frequency - cutoff) / (200 * 200);
 }
 
-static wave_output filterHighPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
+static wave_output filterLowPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
   (void) resonance;
   if (frequency >= cutoff) {
     return 1;
