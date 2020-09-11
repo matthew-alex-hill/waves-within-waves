@@ -21,6 +21,9 @@ void print_token(FILE *out, int tok) {
   case WAVE_IDENTIFIER:
     fprintf(out, "wave(%s)", yylval.s);
     break;
+  case WAVE_OFFSET:
+    fputs("offset",out);
+    break;
   case WAVE_BASE:
     fputs("base",out);
     break;
@@ -192,6 +195,10 @@ void tok_from_attribute(www_state *state, int tok, FILE *out, wave_info *wave_na
     break;
   case WAVE_FILTER:
     *state = FILTER;
+    break;
+  case WAVE_OFFSET:
+    wave_names[index]->offset = 1;
+    strcat(wave_attribute, "->offset");
     break;
   case WAVE_BASE:
     wave_names[index]->base = 1;
@@ -385,6 +392,9 @@ void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *w
 void write_defaults(wave_info *wave, FILE *out) {
   if (!wave) {
     return;
+  }
+  if (!wave->offset) {
+    fprintf(out, "%s->offset.isValue = 1;\n%s->offset.content.value = %d;\n", wave->wave_name, wave->wave_name, OFFSET_DEFAULT);
   }
   if (!wave->base) {
     fprintf(out, "%s->base.isValue = 1;\n%s->base.content.value = %d;\n", wave->wave_name, wave->wave_name, BASE_DEFAULT);

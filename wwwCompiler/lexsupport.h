@@ -23,19 +23,20 @@
 #define MIDI_FREQUENCY (3)
 #define MIDI_VELOCITY (4)
 #define WAVE_IDENTIFIER (5)
-#define WAVE_BASE (6)
-#define WAVE_AMPLITUDE (7)
-#define WAVE_FREQUENCY (8)
-#define WAVE_PHASE (9)
-#define WAVE_ATTACK (10)
-#define WAVE_DECAY (11)
-#define WAVE_SUSTAIN (12)
-#define WAVE_RELEASE (13)
-#define WAVE_CUTOFF (14)
-#define WAVE_RESONANCE (15)  
-#define WAVE_SHAPE (16)
-#define WAVE_FILTER (17)  
-#define PROPERTY_IDENTIFIER (18)
+#define WAVE_OFFSET (6)
+#define WAVE_BASE (7)
+#define WAVE_AMPLITUDE (8)
+#define WAVE_FREQUENCY (9)
+#define WAVE_PHASE (10)
+#define WAVE_ATTACK (11)
+#define WAVE_DECAY (12)
+#define WAVE_SUSTAIN (13)
+#define WAVE_RELEASE (14)
+#define WAVE_CUTOFF (15)
+#define WAVE_RESONANCE (16)  
+#define WAVE_SHAPE (17)
+#define WAVE_FILTER (18)  
+#define PROPERTY_IDENTIFIER (19)
 #define OUTPUT_WAVE (20)
 #define PLUS (21)
 #define MINUS (22)
@@ -45,6 +46,7 @@
 
 
 /* default values if nothing entered for a value */
+#define OFFSET_DEFAULT (0)
 #define BASE_DEFAULT (0)
 #define FREQUENCY_DEFAULT (0)
 #define AMPLITUDE_DEFAULT (1)
@@ -80,6 +82,7 @@ typedef enum compiler_state {
    others - 1 if that attribute is modified, 0 if a default value is needed */
 typedef struct compiler_wave_info {
   char *wave_name;
+  int offset;
   int base;
   int frequency;
   int amplitude;
@@ -173,7 +176,7 @@ void write_defaults(wave_info *wave, FILE *out);
    SELECT - WAVE_IDENTIFIER expected
             WAVE_IDENTIFIER -> START
 
-   ATTRIBUTE - WAVE_SHAPE or WAVE_FILTER or WAVE_BASE or WAVE_FREQUENCY or WAVE_AMPLITUDE or WAVE_PHASE or WAVE_ATTACK or WAVE_DECAY or WAVE_SUSTAIN or WAVE_RELEASE or WAVE_CUTOFF or WAVE_RESONANCE expected
+   ATTRIBUTE - WAVE_SHAPE or WAVE_FILTER or WAVE_OFFSET or WAVE_BASE or WAVE_FREQUENCY or WAVE_AMPLITUDE or WAVE_PHASE or WAVE_ATTACK or WAVE_DECAY or WAVE_SUSTAIN or WAVE_RELEASE or WAVE_CUTOFF or WAVE_RESONANCE expected
                WAVE_SHAPE -> SHAPE
 	       WAVE_FILTER -> FILTER
 	       OTHERS -> MODIFY

@@ -6,6 +6,7 @@
 %}
 
 %%
+\.offset[ \t]*=    return WAVE_OFFSET;
 \.base[ \t]*=      return WAVE_BASE;
 \.amplitude[ \t]*= return WAVE_AMPLITUDE;
 \.frequency[ \t]*= return WAVE_FREQUENCY;
@@ -25,7 +26,7 @@ SUM                return PLUS;
 SUB                return MINUS;
 MUL                return MULTIPLY;
 DIV                return DIVIDE;
-[0-9]+             yylval.n=atoi(yytext); return NUMBER;
+-?[0-9]+             yylval.n=atoi(yytext); return NUMBER;
 [0.9]+\.[0-9]+     yylval.d=atof(yytext); return FLOAT;
 [a-z][a-zA-Z0-9]*  yylval.s=strdup(yytext); return WAVE_IDENTIFIER;
 [A-Z_]*             yylval.s=strdup(yytext); return PROPERTY_IDENTIFIER;
