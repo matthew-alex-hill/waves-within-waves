@@ -288,38 +288,57 @@ void tok_from_filter(www_state *state, int tok, FILE *out, char *wave_attribute)
    wave_attribute - string containing the wave and attributes to write the lines for
    combinerno - determines which combiner data is written to
 */
-static void create_combiner(www_state *state, int tok, FILE *out, char *wave_attribute, int *combinerno) {
-  fprintf(out, "combined_wave *combiner%d = calloc(1, sizeof(combined_wave));\n", *combinerno / 3);
-  fprintf(out, "%s.isValue = 3;\n", wave_attribute);
-  fprintf(out, "%s.content.combined = combiner%d;\n", wave_attribute, *combinerno / 3);
+static void create_combiner(www_state *state, int tok, FILE *out, char *attribute, combiner_stack *stack) {
+  int combinerno = stack->next_combinerno;
+
+  //limit on number of combiners as combiner attribute strings will overflow if the combinerno is too long
+  if (combinerno > MAX_COMBINERS) {
+    printf("ERROR: combiner limit %d exceeded ", MAX_COMBINERS);
+    *state = ERROR;
+    return;
+  }
+  
+  fprintf(out, "combined_wave *combiner%d = calloc(1, sizeof(combined_wave));\n", combinerno);
+  fprintf(out, "%s.isValue = 3;\n", attribute);
+  fprintf(out, "%s.content.combined = combiner%d;\n", attribute, combinerno);
   switch (tok) {
   case PLUS:
-     fprintf(out, "combiner%d->combiner = add_waves;\n", *combinerno / 3);
+     fprintf(out, "combiner%d->combiner = add_waves;\n", combinerno);
      break;
   case MINUS:
-     fprintf(out, "combiner%d->combiner = sub_waves;\n", *combinerno / 3);
+     fprintf(out, "combiner%d->combiner = sub_waves;\n", combinerno);
      break;
   case MULTIPLY:
-     fprintf(out, "combiner%d->combiner = mul_waves;\n", *combinerno / 3);
+     fprintf(out, "combiner%d->combiner = mul_waves;\n", combinerno);
      break;
   case DIVIDE:
-     fprintf(out, "combiner%d->combiner = div_waves;\n", *combinerno / 3);
+     fprintf(out, "combiner%d->combiner = div_waves;\n", combinerno);
      break;
   default:
     break;
   }
+
+
+  //placing a new combiner on the top of the stack
+  stack_node *node = malloc(sizeof(stack_node));
+  node->combinerno = combinerno;
+  node->completed = 0;
+  node->prev = stack->top;
+  stack->top = node;
+
+  stack->next_combinerno += 1;
+  
   *state = MODIFY_COMBINER;
-  (*combinerno)++;
 }
 
-void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute, int *combinerno) {
+void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute, combiner_stack *stack) {
   *state = START;
   switch (tok) {
   case PLUS:
   case MINUS:
   case MULTIPLY:
   case DIVIDE:
-    create_combiner(state, tok, out, wave_attribute, combinerno);
+    create_combiner(state, tok, out, wave_attribute, stack);
     break;
   case NUMBER:
     fprintf(out, "%s.isValue = 1;\n", wave_attribute);
@@ -352,41 +371,68 @@ void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names
   }
 }
 
-void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], int *combinerno) {
+void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], combiner_stack *stack) {
+  int combinerno = stack->top->combinerno;
+  int itemno = stack->top->completed + 1;
   switch (tok) {
   case NUMBER:
-      fprintf(out, "combiner%d->value%d.isValue = 1;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d.content.value = %d;\n", *combinerno / 3, *combinerno % 3, yylval.n);
+    fprintf(out, "combiner%d->value%d.isValue = 1;\n", combinerno, itemno);
+    fprintf(out, "combiner%d->value%d.content.value = %d;\n", combinerno, itemno, yylval.n);
     break;
   case FLOAT:
-    fprintf(out, "combiner%d->value%d.isValue = 1;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d.content.value = %lf;\n", *combinerno / 3, *combinerno % 3, yylval.d);
+    fprintf(out, "combiner%d->value%d.isValue = 1;\n", combinerno, itemno);
+    fprintf(out, "combiner%d->value%d.content.value = %lf;\n", combinerno, itemno, yylval.d);
     break;
   case MIDI_FREQUENCY:
-    fprintf(out, "combiner%d->value%d.isValue = 2;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d.content.midi_value = FREQUENCY;\n", *combinerno / 3, *combinerno % 3);
+    fprintf(out, "combiner%d->value%d.isValue = 2;\n", combinerno, itemno);
+    fprintf(out, "combiner%d->value%d.content.midi_value = FREQUENCY;\n", combinerno, itemno);
     break;
   case MIDI_VELOCITY:
-    fprintf(out, "combiner%d->value%d.isValue = 2;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d.content.midi_value = VELOCITY;\n", *combinerno / 3, *combinerno % 3);
+    fprintf(out, "combiner%d->value%d.isValue = 2;\n", combinerno, itemno);
+    fprintf(out, "combiner%d->value%d.content.midi_value = VELOCITY;\n", combinerno, itemno);
     break;
   case WAVE_IDENTIFIER:
     if (search_for_wave(yylval.s, wave_names)) {
-      fprintf(out, "combiner%d->value%d.isValue = 0;\n", *combinerno / 3, *combinerno % 3);
-      fprintf(out, "combiner%d->value%d.content.nested_wave = %s;\n", *combinerno / 3, *combinerno % 3, yylval.s);
+      fprintf(out, "combiner%d->value%d.isValue = 0;\n", combinerno, itemno);
+      fprintf(out, "combiner%d->value%d.content.nested_wave = %s;\n", combinerno, itemno, yylval.s);
     } else {
       *state = ERROR;
       printf("ERROR: unknown wave %s ", yylval.s);
     }
     break;
+  case PLUS:
+  case MINUS:
+  case MULTIPLY:
+  case DIVIDE:
+    ; //empty statement to allow string declaration
+    char *combiner_attribute = calloc(MAX_COMBINER_ATTRIBUTE_NAME_LENGTH, sizeof(char));
+
+    //initialising the attribute name to be modified
+    //string is safe because length can never exceed 20 if combinerno is 4 digits or less
+    sprintf(combiner_attribute, "combiner%d->value%d", stack->top->combinerno, stack->top->completed + 1);
+
+    create_combiner(state, tok, out, combiner_attribute, stack);
+    free(combiner_attribute);
+    break;
   default:
     *state = ERROR;
     printf("ERROR: illegal combiner attribute value ");
   }
-  if (*combinerno % 3 == 2) {
+
+  stack->top->completed += 1;
+  
+  if (stack->top->completed == 2) {
+    void *prev = stack->top->prev;
+    free(stack->top);
+    stack->top = prev;
+  }
+
+  //If the combiner stack is exhausted then the line of code is over
+  if (!stack->top) {
     *state = START;
   }
-  (*combinerno)++;  
+
+  //otherwise the state remains in MODIFY_COMBINER and this function is called again
 }
 
 void write_defaults(wave_info *wave, FILE *out) {

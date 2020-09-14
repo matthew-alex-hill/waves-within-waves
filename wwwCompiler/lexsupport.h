@@ -9,6 +9,12 @@
 /* maximum length of a wave name */
 #define MAX_NAME_LENGTH (30)
 
+/* defines the maximum length of a combiner attribute name */
+#define MAX_COMBINER_ATTRIBUTE_NAME_LENGTH (20)
+
+/* maximum number of combiners */
+#define MAX_COMBINERS (9999)
+
 /* determines if a PROPERTY_IDENTIFIER token contains a valid shape identifier */
 #define IS_VALID_SHAPE(s) \
   (!strcmp(s,"SAW") || !strcmp(s,"SINE") || !strcmp(s,"SQUARE") || !strcmp(s,"TRIANGLE") || !strcmp(s,"EMPTY"))
@@ -95,6 +101,23 @@ typedef struct compiler_wave_info {
   int resonance;
 } wave_info;
 
+/* a node for the combiners stack 
+   combinerno - the id of the combiner
+   completed - the number of items in the combiner assigned a value
+   prev - the previous item in the stack (the item below it)
+*/
+typedef struct combiner_stack_node {
+  int combinerno;
+  int completed;
+  void *prev;
+} stack_node;
+
+/* a stack will be a pointer to a top node which will be updated when the top node changes */
+typedef struct combiner_stack {
+  stack_node *top;
+  int next_combinerno;
+} combiner_stack;
+
 extern YYSTYPE yylval; //token value
 extern FILE *yyin, *yyout;
 
@@ -152,7 +175,7 @@ void tok_from_filter(www_state *state, int tok, FILE *out, char *wave_attribute)
    out - the file to write lines of code to
    wave_names - a list of waves currently in existence to check wave identifier values point to real waves
    wave_attribute - a pointer to the global string that shows the current line opening */
-void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute, int *combinerno);
+void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], char *wave_attribute, combiner_stack *stack);
 
 /* uses a token to advance the compiler state when in state MODIFY_COMBINER 
    state - pointer to a global state variable to modify
@@ -160,7 +183,7 @@ void tok_from_modify(www_state *state, int tok, FILE *out, wave_info *wave_names
    out - the file to write lines of code to
    wave_names - a list of waves currently in existence to check wave identifier values point to real waves
    combinerno - a pointer to the combinerno counter which tracks the number of the combiner and the value item that is being written to */
-void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], int *combinerno);
+void tok_from_modify_combiner(www_state *state, int tok, FILE *out, wave_info *wave_names[MAX_WAVES], combiner_stack *stack);
 
 /* checks a wave info struct's attribute modifiation bools for unmodified attributes and sets them to a default value
    wave - the wave_info struct to be checked
