@@ -68,7 +68,8 @@ where wave is any declared wave name and SHAPE is any valid shape value
 
 Valid shape values are:
 EMPTY (a flat line)
-SAW 
+REVERSE_SAW (falling sawtooth)
+SAW (rising sawtooth)
 SINE
 SQUARE
 TRIANGLE
@@ -112,8 +113,7 @@ value1 and value2 can be any valid wave value, following the same rules as in th
 If you have nested combiners the recursion works as follows:
 SUM SUB 1 2 3 would return (1 - 2) + 3
 SUM 1 SUB 2 3 would return 1 + (2 - 3)
-
-
+b
 Be careful not to include cyclical wave dependencies as the program currently doesn't detect that and will crash.
 
 Note on offset:

@@ -158,6 +158,22 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
   return sampleStandardWave(wave->shape, base, frequency, amplitude, phase, time);
 }
 
+/* wave generators, sample a wave at a time given doubles as parameters 
+   base - the base of the wave around which it oscilates 
+   frequency - the frequency of the wave (number of oscillations per second 
+   amplitude - the maximum displacement from the base 
+   phase - how far along the oscilation cycle the wave is at time 0 as a fraction from 0 to 1
+   time - the time to sample at
+*/
+
+//creates a reverse sawtooth wave with the given parameters and samples it at the current time
+static wave_output getReverseSaw(wave_output base, wave_output frequency,
+			  wave_output amplitude, wave_output phase,
+			  clock time) {
+  wave_output distance = time * frequency + phase/frequency;
+  return base - 2 * amplitude * (distance - (int) distance) - amplitude;
+}
+
 //creates a sawtooth wave with the given parameters and samples it at the current time
 static wave_output getSaw(wave_output base, wave_output frequency,
 			  wave_output amplitude, wave_output phase,
@@ -204,7 +220,7 @@ static wave_output getEmpty(wave_output base, wave_output frequency,
 
 wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output frequency, wave_output amplitude, wave_output phase, clock time) {
     //array of function pointers to sample each wave type
-  default_wave_maker makers[EMPTY+1] = {getSaw, getSine, getSquare, getTriangle, getEmpty};
+  default_wave_maker makers[EMPTY+1] = {getReverseSaw, getSaw, getSine, getSquare, getTriangle, getEmpty};
 
   //wave shape used to index the array
   wave_output out = makers[shape] (base, frequency, amplitude, phase, time);

@@ -55,6 +55,7 @@ typedef wave_output (*wave_combiner) (wave_output, wave_output);
 
 //defines the shape of a wave, empty is a flat line on 0
 typedef enum wave_shape_enum {
+  REVERSE_SAW,
   SAW,
   SINE,
   SQUARE,
