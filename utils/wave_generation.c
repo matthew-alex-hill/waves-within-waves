@@ -231,42 +231,33 @@ char *getProgramError(error_code e) {
   return possible_errors[i].message;  
 }
 
+static void freeWaveAttribute(wave_value *attribute) {
+  if (attribute->isValue == 0) {
+    freeWave((Wave *) attribute->content.nested_wave);
+  } else if (attribute->isValue == 3) {
+    combined_wave *combiner = (combined_wave *) attribute->content.combined;
+    freeWaveAttribute(&combiner->value1);
+    freeWaveAttribute(&combiner->value2);
+    free(combiner);
+  }
+}
+
 void freeWave(Wave* wave) {
   if (wave == NULL) {
     return;
   }
-
-  if (!wave->base.isValue) {
-    freeWave(wave->base.content.nested_wave);
-  }
-
-  if (!wave->frequency.isValue) {
-    freeWave(wave->frequency.content.nested_wave);
-  }
-
-  if (!wave->amplitude.isValue) {
-    freeWave(wave->amplitude.content.nested_wave);
-  }
-
-  if (!wave->phase.isValue) {
-    freeWave(wave->phase.content.nested_wave);
-  }
-
-  if (!wave->attack.isValue) {
-    freeWave(wave->attack.content.nested_wave);
-  }
-
-  if (!wave->decay.isValue) {
-    freeWave(wave->decay.content.nested_wave);
-  }
-
-  if (!wave->sustain.isValue) {
-    freeWave(wave->sustain.content.nested_wave);
-  }
-
-  if (!wave->release.isValue) {
-    freeWave(wave->release.content.nested_wave);
-  }
+  
+  freeWaveAttribute(&wave->offset);
+  freeWaveAttribute(&wave->base);
+  freeWaveAttribute(&wave->frequency);
+  freeWaveAttribute(&wave->amplitude);
+  freeWaveAttribute(&wave->phase);
+  freeWaveAttribute(&wave->attack);
+  freeWaveAttribute(&wave->decay);
+  freeWaveAttribute(&wave->sustain);
+  freeWaveAttribute(&wave->release);
+  freeWaveAttribute(&wave->cutoff);
+  freeWaveAttribute(&wave->resonance);
 
   free(wave);
 }

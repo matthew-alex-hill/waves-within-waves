@@ -8,7 +8,7 @@
 #include <string.h>
 #include <assert.h>
 
-#define DEBUG //Uncomment me for debuggging information in runtime
+//#define DEBUG //Uncomment me for debuggging information in runtime
 
 //the default sample rate for portaudio to use, how many times the callback is called every second
 #define SAMPLE_RATE (44100)
