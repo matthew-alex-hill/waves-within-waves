@@ -13,6 +13,9 @@
 //the default sample rate for portaudio to use, how many times the callback is called every second
 #define SAMPLE_RATE (44100)
 
+//midi messages not handled by the program to be filtered out
+#define FILTER_OUT (PM_FILT_FD | PM_FILT_REALTIME | PM_FILT_AFTERTOUCH | PM_FILT_PROGRAM | PM_FILT_CONTROL | PM_FILT_PITCHBEND | PM_FILT_MTC | PM_FILT_SONG_POSITION | PM_FILT_SONG_SELECT | PM_FILT_TUNE | PM_FILT_SYSTEMCOMMON | PM_FILT_REALTIME)
+
 //error checker for portaudio
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
@@ -134,10 +137,10 @@ int main(int argc, char **argv) {
   PM_CHECK(pm_err);
 
   //only receive note on or note off messages
-  /*
-  Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
+  
+  Pm_SetFilter(midi_input_stream, FILTER_OUT);
   PM_CHECK(pm_err);
-  */
+  
   //structure used to pass the list of notes to the portaudio callback
   notes_data notes_info = {0};
 
