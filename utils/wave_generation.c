@@ -136,10 +136,11 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
     return 0;
   }
 
+  
   if (wave->filter != NONE) {
     cutoff = sampleWaveAttribute(&wave->cutoff, &flags->cutoff, &flags->cutoff_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
     resonance = sampleWaveAttribute(&wave->resonance, &flags->resonance, &flags->resonance_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
-
+    
     if (wave->filter == LOW_PASS) {
       dampner = dampner * filterLowPass(cutoff, resonance, frequency);
     } else if (wave->filter == HIGH_PASS) {
@@ -148,7 +149,6 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
       dampner = dampner * filterBandPass(cutoff, resonance, frequency);
     }
   }
-
   amplitude = amplitude * dampner;
   if (amplitude <= 0) {
     return 0;
@@ -222,8 +222,14 @@ wave_output sampleStandardWave(wave_shape shape, wave_output base, wave_output f
     //array of function pointers to sample each wave type
   default_wave_maker makers[EMPTY+1] = {getReverseSaw, getSaw, getSine, getSquare, getTriangle, getEmpty};
 
+  if (shape > EMPTY || shape < REVERSE_SAW) {
+    //undefined shape, generate an empty wave
+    return getEmpty(base, frequency, amplitude, phase, time);
+  }
+  
   //wave shape used to index the array
   wave_output out = makers[shape] (base, frequency, amplitude, phase, time);
+
   return out;
 }
 
