@@ -13,10 +13,6 @@
 //the default sample rate for portaudio to use, how many times the callback is called every second
 #define SAMPLE_RATE (44100)
 
-//CURRENTLY UNUSED
-//The number of seconds to play any test audio for
-#define PLAYTIME (30)
-
 //error checker for portaudio
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
@@ -63,15 +59,7 @@ static int paWavesWithinWavesCallback(const void *input,
   
     for(int i = 0; i < data->notes_info->length; i++) {
       current_value += (float) sampleWave(wave, *(data->time), notes[i], flags, 1, NULL);
-      //TODO: segfaulting bug caused here
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
-
-      /* TODO: this no longer works now the adsr system has been reworked
-      //if the note has been released and has fell to 0 volume, delete it
-      if (notes[i]->pressed == RELEASED && notes[i]->pressed_time > notes[i]->release) {
-	removeNote(notes, &data->notes_info->length, i);
-      }
-      */
     }
     if (data->notes_info->length != 0) {
       current_value = (float) (current_value / data->notes_info->length);
@@ -96,11 +84,11 @@ int main(int argc, char **argv) {
   processing_flags flags = {0};
   
   //booleans stating whether there are input and output files
-  int inFile = 0, outFile = 0;
-  int device_index;
+  int  outFile = 0;
+  int device_index, playtime;
 
   //filenames for loaded files
-  char *midiIn, *txtOut;
+  char *txtOut;
 
   //buffer used to read midi messages into by portmidi
   PmEvent midi_messages[MIDI_BUFFER_SIZE];
@@ -114,9 +102,11 @@ int main(int argc, char **argv) {
     }
   }
   
-  //TODO: make this more secure
   printf("Select an input device: ");
   FATAL_PROG((!scanf("%d", &device_index)), ARGUMENT_ERROR);
+
+  printf("Select a playing time: ");
+  FATAL_PROG((!scanf("%d", &playtime)), ARGUMENT_ERROR);
   
   PortMidiStream *midi_input_stream;
   clock midi_input_time;
@@ -152,28 +142,20 @@ int main(int argc, char **argv) {
   switch (argc) {
   case 1: //no arguments so no files opened
     break;
-  case 3: //two arguments, midi file loaded and output file written to
+  case 2: //one argument, text file loaded for output
     outFile = 1;
-    txtOut = argv[2];
-  case 2: //one argument, midi file loaded
-    inFile = 1;
-    midiIn = argv[1];
+    txtOut = argv[1];
     break;
   default:
     FATAL_PROG(1, ARGUMENT_ERROR);
   }
 
   //load files where necessary
-  FILE * produced_data = NULL, *input_data = NULL;
+  FILE * produced_data = NULL;
   
   if (outFile) {
     produced_data = fopen(txtOut, "w");
     FATAL_SYS(!produced_data);
-  }
-
-  if (inFile) {
-    input_data = fopen(midiIn, "w");
-    FATAL_SYS(!input_data);
   }
 
   //loads the wave data structure outlined in synth_source.c
@@ -264,8 +246,7 @@ int main(int argc, char **argv) {
   PmEvent *event; //the urrent evet being decoded
   midi_note *temp_note; //temporary pointer used to add notes to notes_info
 
-  //TODO: add user controlled while loop exit condition
-  while (midi_input_time < PLAYTIME * 1000) {
+  while (midi_input_time < playtime * 1000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
       //decode all new midi messages
@@ -335,9 +316,6 @@ int main(int argc, char **argv) {
   PA_CHECK(pa_err);
   printf("portaudio terminated\n");
 
-  if (inFile) {
-    FATAL_SYS(fclose(input_data));
-  }
  fatal:
   //close the program and check for any errors
   freeWave(wave);
