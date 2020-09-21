@@ -8,7 +8,7 @@
 #include <string.h>
 #include <assert.h>
 
-//#define DEBUG //Uncomment me for debuggging information in runtime
+#define DEBUG //Uncomment me for debuggging information in runtime
 
 //the default sample rate for portaudio to use, how many times the callback is called every second
 #define SAMPLE_RATE (44100)
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   
   //booleans stating whether there are input and output files
   int  outFile = 0;
-  int device_index, playtime;
+  int device_index, playtime, channelno;
 
   //filenames for loaded files
   char *txtOut;
@@ -105,6 +105,9 @@ int main(int argc, char **argv) {
   printf("Select an input device: ");
   FATAL_PROG((!scanf("%d", &device_index)), ARGUMENT_ERROR);
 
+  printf("Select an input channel: ");
+  FATAL_PROG((!scanf("%d", &channelno)), ARGUMENT_ERROR);
+  
   printf("Select a playing time: ");
   FATAL_PROG((!scanf("%d", &playtime)), ARGUMENT_ERROR);
   
@@ -125,16 +128,16 @@ int main(int argc, char **argv) {
 
   PM_CHECK(pm_err);
 
-  /* TODO: masking stops any messages getting through
+  
   //only read midi messages from channel 1
-  Pm_SetChannelMask(midi_input_stream, Pm_Channel(1));
+  Pm_SetChannelMask(midi_input_stream, Pm_Channel(channelno - 1));
   PM_CHECK(pm_err);
 
   //only receive note on or note off messages
+  /*
   Pm_SetFilter(midi_input_stream, PM_FILT_NOTE);
   PM_CHECK(pm_err);
   */
-  
   //structure used to pass the list of notes to the portaudio callback
   notes_data notes_info = {0};
 
@@ -204,6 +207,7 @@ int main(int argc, char **argv) {
       if (notes_info.length) {
 	out = out / notes_info.length;
       }
+      
       fprintf(produced_data, "%f %f\n", out, time);
       time += increments;
     }
