@@ -26,15 +26,19 @@ static wave_output getValue(wave_value *waveValue, clock time, midi_note *note, 
     //a midi note's value
     *note_dependant_flag = 0;
     if (waveValue->content.midi_value == FREQUENCY) {
+      //converts midi note with offset into a wave frequency
       return (440 * pow(2, ((note->frequency + offset) - 69)/12));
     }
+    //converts a midi velocity value into a wave amplitude
     return note->velocity / 128;
   case 3:
     //a combined wave
     combined = (combined_wave *) waveValue->content.combined;
+    //applies combiner on the values in the combiner 
     return combined->combiner(getValue(&combined->value1, time, note, note_dependant_flag, flags, offset),
 			      getValue(&combined->value2, time, note, note_dependant_flag, flags, offset));
   default:
+    //shouldnt reach here unless wave source code is tampered with, returns 0 to avoid unexoected behaviour
     return 0;
   }
 }
@@ -51,11 +55,14 @@ static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependan
   wave_output out;
   
   if (flag_set) {
+    //if flags are being used examine flags otherwise just call get value
     if (!*note_dependant_flag) {
+      //recalculate wave value
       *note_dependant_flag = 1; //assuming the value isnt note dependant, which is either confirmed in the getValue call or set back to being note dependant
       out = getValue(attribute, time, note, note_dependant_flag, flags, offset);
       *calculated_value = out;
     } else  {
+      //use existing value
       out = *calculated_value;
     }
   } else {
@@ -64,6 +71,11 @@ static wave_output sampleWaveAttribute(wave_value *attribute, int *note_dependan
   return out;
 }
 
+/* Filter functions used to simulate wave filters 
+   cutoff - the cutoff frequency
+   resonance - the amount of resonance on the filter
+   frequency - the frequency of the wave being filtered
+ */
 static wave_output filterHighPass(wave_output cutoff, wave_output resonance, wave_output frequency) {
   (void) resonance;
   if (frequency <= cutoff) {
@@ -99,22 +111,26 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
   //calculates offset and rounds it down to an integer
   offset = (int) sampleWaveAttribute(&wave->offset, &flags->offset, &flags->offset_value, host_dependancy_pointer, flag_set, flags, time, note, 0);
   
-  //sets wave values to their values at the current time
+  //sets wave values that will always be needed to their values at the current time
   base = sampleWaveAttribute(&wave->base, &flags->base, &flags->base_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
   frequency = sampleWaveAttribute(&wave->frequency, &flags->frequency, &flags->frequency_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
   amplitude = sampleWaveAttribute(&wave->amplitude, &flags->amplitude, &flags->amplitude_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
   phase = sampleWaveAttribute(&wave->phase, &flags->phase, &flags->phase_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
   
   wave_output dampner = 0;
- 
+
+  //checks what stage of ADSR the wave is in and applies the envelope to the dampner
+  //only samples the ADSR values when each is needed
   if (note->pressed == HELD) {
     attack = sampleWaveAttribute(&wave->attack, &flags->attack, &flags->attack_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+    
     if (note->pressed_time < attack) {
       //attacking
       dampner = note->pressed_time / attack;
     } else {
       decay = sampleWaveAttribute(&wave->decay, &flags->decay, &flags->decay_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
       sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
+
       if (note->pressed_time < attack + decay) {
 	//decaying
 	dampner = 1 + (sustain - 1) * ((note->pressed_time - attack) / decay);
@@ -122,12 +138,13 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
 	//sustaining
 	dampner = sustain;
       }
+      
     }
   } else {
-    sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
     release = sampleWaveAttribute(&wave->release, &flags->release, &flags->release_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
     //releasing
     if (release > 0) {
+    sustain = sampleWaveAttribute(&wave->sustain, &flags->sustain, &flags->sustain_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
       dampner = sustain - note->pressed_time * (sustain / release);
     }
   }
@@ -136,7 +153,7 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
     return 0;
   }
 
-  
+  //applies filter to dampner value if there is a filter on the wave
   if (wave->filter != NONE) {
     cutoff = sampleWaveAttribute(&wave->cutoff, &flags->cutoff, &flags->cutoff_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
     resonance = sampleWaveAttribute(&wave->resonance, &flags->resonance, &flags->resonance_value, host_dependancy_pointer, flag_set, flags, time, note, offset);
@@ -149,6 +166,7 @@ wave_output sampleWave(Wave *wave, clock time, midi_note *note, processing_flags
       dampner = dampner * filterBandPass(cutoff, resonance, frequency);
     }
   }
+  
   amplitude = amplitude * dampner;
   if (amplitude <= 0) {
     return 0;
@@ -253,10 +271,15 @@ char *getProgramError(error_code e) {
   return possible_errors[i].message;  
 }
 
+/* frees any recursively allocated data inside of a wave attribute
+   attribute - the attribute to be freed
+ */
 static void freeWaveAttribute(wave_value *attribute) {
   if (attribute->isValue == 0) {
+    //if the attribute has a nested wave, free that wave
     freeWave((Wave *) attribute->content.nested_wave);
   } else if (attribute->isValue == 3) {
+    //if the attribute has a combiner free both its values and then the combiner itself
     combined_wave *combiner = (combined_wave *) attribute->content.combined;
     freeWaveAttribute(&combiner->value1);
     freeWaveAttribute(&combiner->value2);
@@ -284,6 +307,7 @@ void freeWave(Wave* wave) {
   free(wave);
 }
 
+//wave combiner functions that combine two wave values
 wave_output add_waves(wave_output value1, wave_output value2) {
   return value1 + value2;
 }
