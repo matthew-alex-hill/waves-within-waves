@@ -8,7 +8,7 @@
 #include <string.h>
 #include <assert.h>
 
-#define DEBUG //Uncomment me for debuggging information in runtime
+//#define DEBUG //Uncomment for debuggging information in runtime
 
 //the default sample rate for portaudio to use, how many times the callback is called every second
 #define SAMPLE_RATE (44100)
@@ -20,6 +20,12 @@
 #define PA_CHECK(err) \
   do { if (err != paNoError) goto pa_fatal; } while (0)
 
+/* data used in the callback function to generate wave samples
+   time - current time
+   notes_info - information about the number of notes and the mii values of each note
+   wave - the wave to be sampled
+   flags - processng flags for optimisation of wave sampling
+*/
 typedef struct synth_data {
   clock *time;
   notes_data *notes_info;
@@ -51,6 +57,7 @@ static int paWavesWithinWavesCallback(const void *input,
   for (unsigned int i = 0; i < frameCount; i++) {
     current_value = 0;
     //ensures all values are recalculated at the start of each frame
+    flags->offset = 0;
     flags->base = 0;
     flags->frequency = 0;
     flags->amplitude = 0;
@@ -59,11 +66,15 @@ static int paWavesWithinWavesCallback(const void *input,
     flags->decay = 0;
     flags->sustain = 0;
     flags->release = 0;
+    flags->cutoff = 0;
+    flags->resonance = 0;
   
     for(int i = 0; i < data->notes_info->length; i++) {
       current_value += (float) sampleWave(wave, *(data->time), notes[i], flags, 1, NULL);
       notes[i]->pressed_time += (clock) 1 / SAMPLE_RATE;
     }
+
+    //averages out the notes to keep the volume levels the same with any number of notes
     if (data->notes_info->length != 0) {
       current_value = (float) (current_value / data->notes_info->length);
     }
@@ -86,8 +97,10 @@ int main(int argc, char **argv) {
   Wave *wave = NULL;
   processing_flags flags = {0};
   
-  //booleans stating whether there are input and output files
+  //boolean stating whether there is an output file
   int  outFile = 0;
+
+  //variables set by user input on start up
   int device_index, playtime, channelno;
 
   //filenames for loaded files
@@ -117,7 +130,7 @@ int main(int argc, char **argv) {
   PortMidiStream *midi_input_stream;
   clock midi_input_time;
 
-  pt_err = Pt_Start(LATENCY, PtClockIncrement, &midi_input_time); //starts a clock o increment once every millisecond
+  pt_err = Pt_Start(LATENCY, PtClockIncrement, &midi_input_time); //starts a clock to increment once every millisecond
 
   PT_CHECK(pt_err);
 
@@ -186,12 +199,12 @@ int main(int argc, char **argv) {
   note->velocity = 127;
   note->pressed = HELD;
   addNote(notes_info.notes, &notes_info.length, note);
-  //addNote(notes_info.notes, &notes_info.length, note);
 
   //file output for graph plotting
   if (outFile) {
     while (time <= limit) {
       //ensures all values are recalculated at the start of each frame
+      flags.offset = 0;
       flags.base = 0;
       flags.frequency = 0;
       flags.amplitude = 0;
@@ -200,6 +213,8 @@ int main(int argc, char **argv) {
       flags.decay = 0;
       flags.sustain = 0;
       flags.release = 0;
+      flags.cutoff = 0;
+      flags.resonance = 0;
       out = 0;
 
       for (int i = 0; i < notes_info.length; i++) {
@@ -207,6 +222,7 @@ int main(int argc, char **argv) {
 	notes_info.notes[i]->pressed_time += increments;
       }
 
+      //averages out note values
       if (notes_info.length) {
 	out = out / notes_info.length;
       }
@@ -221,8 +237,9 @@ int main(int argc, char **argv) {
   }
 
   removeNote(notes_info.notes, &notes_info.length, 0); //removes testing note
-  //removeNote(notes_info.notes, &notes_info.length, 1); //removes testing note
-  
+
+
+  //starting audio output stream
   PaStream *stream;
   
   time = 0;
@@ -253,6 +270,8 @@ int main(int argc, char **argv) {
   PmEvent *event; //the urrent evet being decoded
   midi_note *temp_note; //temporary pointer used to add notes to notes_info
 
+
+  //loop to read midi messages and write to audio output
   while (midi_input_time < playtime * 1000) {
     no_read = Pm_Read(midi_input_stream, &midi_messages[0], MIDI_BUFFER_SIZE);
     if (no_read > 0 && no_read <= MIDI_BUFFER_SIZE) {
@@ -331,7 +350,8 @@ int main(int argc, char **argv) {
   for (int i = 0; i < notes_info.length; i++) {
     free(notes_info.notes[i]);
   }
-  
+
+  //prints an error message for program errors
   if (err == OK) {
     return EXIT_SUCCESS;
   } else if (err >= SYS) {
@@ -351,8 +371,24 @@ int main(int argc, char **argv) {
   return EXIT_FAILURE;
 
  pt_fatal:
-  //TODO: manually code in pt error messages
-  printf("PortTime error but i cant tell you what it is\n");
+  printf("PortTime error: ");
+  switch (pt_err) {
+  case ptHostError:
+    printf("System error\n");
+    break;
+  case ptAlreadyStarted:
+    printf("Cannot start timer as it is already started\n");
+    break;
+  case ptAlreadyStopped:
+    printf("Cannot stop timer as it has already been stopped\n");
+    break;
+  case ptInsufficientMemory:
+    printf("Insufficient Memory to create timer\n");
+    break;
+  default:
+    printf("Unknown error\n");
+    break;  
+  }
   return EXIT_FAILURE;
   
 }
