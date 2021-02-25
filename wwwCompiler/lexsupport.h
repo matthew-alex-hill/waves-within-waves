@@ -17,7 +17,7 @@
 
 /* determines if a PROPERTY_IDENTIFIER token contains a valid shape identifier */
 #define IS_VALID_SHAPE(s) \
-  (!strcmp(s,REVERSE_SAW) || !strcmp(s,"SAW") || !strcmp(s,"SINE") || !strcmp(s,"SQUARE") || !strcmp(s,"TRIANGLE") || !strcmp(s,"EMPTY"))
+  (!strcmp(s,"REVERSE_SAW") || !strcmp(s,"SAW") || !strcmp(s,"SINE") || !strcmp(s,"SQUARE") || !strcmp(s,"TRIANGLE") || !strcmp(s,"EMPTY"))
 
 /* determines if a PROPERTY_IDENTIFIER token contains a valid filter identifier */
 #define IS_VALID_FILTER(s) \
