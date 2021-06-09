@@ -23,7 +23,7 @@ To make and run a synth follow these steps:
 
 1) Create a www source file, this can be any text file as long as the code conforms to the language rules
 
-2) Compile this file by exeuting ./wwwc in the waves-within-waves directory with the name of your file
+2) Compile this file by executing ./wwwc in the waves-within-waves directory with the name of your file
 For example ./wwwc example.www
 
 3) Fix any errors that show up
@@ -38,7 +38,7 @@ The www language currently only allows you to declare waves and adjust their att
 Declaring Waves:
 Type the name of the wave on its own line to declare it
 Wave names must be alphanumeric and start with a lower case letter
-You are not allowed to call a wave 'in' as this onflicts with the name of the midi input stream
+You are not allowed to call a wave 'in' as this conflicts with the name of the midi input stream
 You can set any wave as the main wave (the wave that will be played as sound by ./synth) by typing play and then the wave name eg "play mainWave"
 You can put the play keyword in front of a new delaration or an existing wave
 If there are many instances of the play keyword, the last one will be used
@@ -51,7 +51,7 @@ Waves currently have 9 attributes:
  -offset - How many keys higher/lower than the actual key the wave will interpret a midi note's frequency (see Note on offset section) 
  -base - the value around which the wave oscillates
  -frequency - the number of full oscillations per second
- -amplitude - the maximum displaement from the base value
+ -amplitude - the maximum displacement from the base value
  -phase - How far along the waveform the wave starts, as a fraction from 0 to 1
  -attack - How long it takes for the waves amplitude to increase to its maximum value in seconds
  -decay - How long it takes for a wave to decay from maximum to sustained amplitude in seconds
